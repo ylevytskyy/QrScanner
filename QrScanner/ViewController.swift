@@ -53,13 +53,17 @@ extension ViewController {
 extension ViewController: QRProcessor {
   // MARK: - QRProcessor
 
-  func didProcess(_ image: UIImage!, traces: UIImage!, qrCode: UIImage!) {
+  public func didProcess(_ image: UIImage!, traces: UIImage!, qrCode: UIImage!, top: CGPoint, bottom: CGPoint, right: CGPoint, cross:CGPoint, found: Bool, orientation: QRProcessorOrientation) {
     originalImageView.image = image
+    originalImageView.setNeedsDisplay()
+
     tracesImageView.image = traces
     qrImageView.image = qrCode
-
+    
     let ciImage = CIImage(cgImage: qrCode.cgImage!)
     if let decode = performQRCodeDetection(image: ciImage) {
+      print("top: \(top) image: \(image.size) found: \(found)")
+      
       decodedLabel.text = decode
     }
   }

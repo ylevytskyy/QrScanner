@@ -30,11 +30,7 @@ public:
 public:
   bool start() {
     capture.reset(new VideoCapture(0));
-    
-//    if (!capture->open(CV_CAP_AVFOUNDATION)) {
-//      NSLog(@"Open video camera failed");
-//    }
-    
+        
     if(!capture->isOpened()) { cerr << " ERR: Unable find input Video source." << endl;
       return false;
     }
@@ -62,9 +58,12 @@ public:
     qr = Mat::zeros(100, 100, CV_8UC3 );
     qr_gray = Mat::zeros(100, 100, CV_8UC1);
     qr_thres = Mat::zeros(100, 100, CV_8UC1);
-    
+    Point2f cross;
+    bool iflag = false;
+
     *capture >> image;						// Capture Image from Image Input
     if(image.empty()){ cerr << "ERR: Unable to query image from capture device.\n" << endl;
+      return;
     }
     
     cvtColor(image,*gray,CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale
@@ -201,7 +200,7 @@ public:
         cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
         cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
         
-        int iflag = getIntersectionPoint(M[1],M[2],O[3],O[2],N);
+        iflag = getIntersectionPoint(M[1],M[2],O[3],O[2],N);
         
         
         src.push_back(L[0]);
@@ -231,7 +230,7 @@ public:
         drawContours( image, contours, top , Scalar(255,200,0), 2, 8, hierarchy, 0 );
         drawContours( image, contours, right , Scalar(0,0,255), 2, 8, hierarchy, 0 );
         drawContours( image, contours, bottom , Scalar(255,0,100), 2, 8, hierarchy, 0 );
-        
+     
         // Insert Debug instructions here
         if(DBG==1)
         {
@@ -298,7 +297,11 @@ public:
     }
     
     @autoreleasepool{
-      [qrProcessor didProcess:MatToUIImage(image) traces:MatToUIImage(*traces) qrCode:MatToUIImage(qr_thres)];
+      CGPoint topPoint = mc.size() > 0 ? CGPointMake(mc[top].x, mc[top].y) : CGPointZero;
+      CGPoint bottomPoint = mc.size() > 0 ? CGPointMake(mc[bottom].x, mc[bottom].y) : CGPointZero;
+      CGPoint rightPoint = mc.size() > 0 ? CGPointMake(mc[right].x, mc[right].y) : CGPointZero;
+      CGPoint crossPoint = CGPointMake(cross.x, cross.y);
+      [qrProcessor didProcess:MatToUIImage(image) traces:MatToUIImage(*traces) qrCode:MatToUIImage(qr_thres) top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
     }
   }
   
@@ -583,9 +586,9 @@ private:
   delete _qrProcessor;
 }
 
--(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode {
+-(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGPoint)top bottom: (CGPoint)bottom right: (CGPoint)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
   dispatch_async(dispatch_get_main_queue(), ^{
-    [self.delegate didProcess:image traces:traces qrCode:qrCode];
+    [self.delegate didProcess:image traces:traces qrCode:qrCode top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
   });
 }
 
