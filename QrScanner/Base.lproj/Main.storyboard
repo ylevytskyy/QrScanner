@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="QrScanner" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="KjO-rv-hae">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="225"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="225" id="TmK-Ca-yj1"/>
+                                </constraints>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="6An-Yg-jDE">
+                                <rect key="frame" x="0.0" y="225" width="375" height="225"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="225" id="m4b-IV-2Bn"/>
+                                </constraints>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="tdz-lQ-9wE">
+                                <rect key="frame" x="0.0" y="450" width="375" height="200.5"/>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Zo5-L4-aar">
+                                <rect key="frame" x="0.0" y="650.5" width="375" height="16.5"/>
+                                <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="14"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="tdz-lQ-9wE" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="05r-q3-Wvz"/>
+                            <constraint firstItem="KjO-rv-hae" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="FEW-RE-bQD"/>
+                            <constraint firstAttribute="trailing" secondItem="6An-Yg-jDE" secondAttribute="trailing" id="JfJ-Ab-HWO"/>
+                            <constraint firstItem="Zo5-L4-aar" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="OCO-a2-EcU"/>
+                            <constraint firstItem="Zo5-L4-aar" firstAttribute="top" secondItem="tdz-lQ-9wE" secondAttribute="bottom" id="YWo-5Z-f56"/>
+                            <constraint firstItem="KjO-rv-hae" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="ayl-Bl-4KI"/>
+                            <constraint firstAttribute="trailing" secondItem="Zo5-L4-aar" secondAttribute="trailing" id="eoa-oi-jh3"/>
+                            <constraint firstItem="tdz-lQ-9wE" firstAttribute="top" secondItem="6An-Yg-jDE" secondAttribute="bottom" id="fPA-n7-r4E"/>
+                            <constraint firstAttribute="trailing" secondItem="tdz-lQ-9wE" secondAttribute="trailing" id="fp1-QA-zrW"/>
+                            <constraint firstItem="6An-Yg-jDE" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="lu0-Fw-tzx"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="Zo5-L4-aar" secondAttribute="bottom" id="qWM-ud-VEF"/>
+                            <constraint firstItem="6An-Yg-jDE" firstAttribute="top" secondItem="KjO-rv-hae" secondAttribute="bottom" id="x71-dc-dhN"/>
+                            <constraint firstAttribute="trailing" secondItem="KjO-rv-hae" secondAttribute="trailing" id="yib-4b-0ys"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="decodedLabel" destination="Zo5-L4-aar" id="os5-7V-6ux"/>
+                        <outlet property="originalImageView" destination="KjO-rv-hae" id="Nst-gY-mut"/>
+                        <outlet property="qrImageView" destination="tdz-lQ-9wE" id="qUV-dZ-kDy"/>
+                        <outlet property="tracesImageView" destination="6An-Yg-jDE" id="rG9-Dk-WKV"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="117.59999999999999" y="123.68815592203899"/>
+        </scene>
+    </scenes>
+</document>
