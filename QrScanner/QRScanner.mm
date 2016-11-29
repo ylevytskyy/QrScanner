@@ -23,14 +23,19 @@ const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
 
+CGRect from(cv::Rect rect) {
+  return CGRectMake(rect.x, rect.y, rect.width, rect.height);
+}
+
 class QRProcessor {
 public:
   id<QRProcessor> qrProcessor;
   
 public:
   bool start() {
-    capture.reset(new VideoCapture(0));
-        
+    capture.reset(new VideoCapture());
+    capture->open(0);
+    
     if(!capture->isOpened()) { cerr << " ERR: Unable find input Video source." << endl;
       return false;
     }
@@ -113,6 +118,10 @@ public:
       }
     }
     
+    int top = -1,right = -1,bottom = -1;
+    CGRect topRect = CGRectZero;
+    CGRect bottomRect = CGRectZero;
+    CGRect rightRect = CGRectZero;
     
     if (mark >= 2)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
     {
@@ -179,11 +188,8 @@ public:
       
       
       // To ensure any unintended values do not sneak up when QR code is not present
-      float area_top,area_right, area_bottom;
-      
-      if( top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10 )
+      if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10)
       {
-        
         vector<Point2f> L,M,O, tempL,tempM,tempO;
         Point2f N;
         
@@ -227,9 +233,6 @@ public:
         }
         
         //Draw contours on the image
-        drawContours( image, contours, top , Scalar(255,200,0), 2, 8, hierarchy, 0 );
-        drawContours( image, contours, right , Scalar(0,0,255), 2, 8, hierarchy, 0 );
-        drawContours( image, contours, bottom , Scalar(255,0,100), 2, 8, hierarchy, 0 );
      
         // Insert Debug instructions here
         if(DBG==1)
@@ -291,17 +294,19 @@ public:
           }
           
           // Debug Prints
+
+          topRect = from(cv::minAreaRect(contours[top]).boundingRect());
+          bottomRect = from(cv::minAreaRect(contours[bottom]).boundingRect());
+          rightRect = from(cv::minAreaRect(contours[right]).boundingRect());
         }
         
       }
     }
     
     @autoreleasepool{
-      CGPoint topPoint = mc.size() > 0 ? CGPointMake(mc[top].x, mc[top].y) : CGPointZero;
-      CGPoint bottomPoint = mc.size() > 0 ? CGPointMake(mc[bottom].x, mc[bottom].y) : CGPointZero;
-      CGPoint rightPoint = mc.size() > 0 ? CGPointMake(mc[right].x, mc[right].y) : CGPointZero;
+      
       CGPoint crossPoint = CGPointMake(cross.x, cross.y);
-      [qrProcessor didProcess:MatToUIImage(image) traces:MatToUIImage(*traces) qrCode:MatToUIImage(qr_thres) top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+      [qrProcessor didProcess:MatToUIImage(image) traces:MatToUIImage(*traces) qrCode:MatToUIImage(qr_thres) top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
     }
   }
   
@@ -550,7 +555,7 @@ private:
   vector<vector<cv::Point> > contours;
   vector<Vec4i> hierarchy;
 
-  int mark,A,B,C,top,right,bottom,median1,median2,outlier;
+  int mark,A,B,C,median1,median2,outlier;
   float AB,BC,CA, dist,slope, areat,arear,areab, large, padding;
 
   int align,orientation;
@@ -586,7 +591,7 @@ private:
   delete _qrProcessor;
 }
 
--(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGPoint)top bottom: (CGPoint)bottom right: (CGPoint)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
+-(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
   dispatch_async(dispatch_get_main_queue(), ^{
     [self.delegate didProcess:image traces:traces qrCode:qrCode top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
   });
