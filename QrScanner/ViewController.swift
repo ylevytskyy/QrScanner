@@ -9,7 +9,7 @@
 import UIKit
 
 class ViewController: UIViewController {
-  fileprivate let qrScanner = QRScanner()
+  fileprivate var qrScanner: QRScanner!
 
   lazy var detector: CIDetector? = {
     let options = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
@@ -28,12 +28,14 @@ extension ViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    qrScanner.delegate = self
-    qrScanner.start()
+    qrScanner = QRScanner()
+//    qrScanner = QRScanner(parentView: view)
+    qrScanner?.delegate = self
+    qrScanner?.start()
 
     DispatchQueue.global().async {
       while true {
-        self.qrScanner.process()
+        self.qrScanner?.process()
       }
     }
   }

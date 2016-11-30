@@ -9,6 +9,7 @@
 #import <opencv2/opencv.hpp>
 #import <opencv2/highgui.hpp>
 #import <opencv2/imgcodecs/ios.h>
+#import <opencv2/videoio/cap_ios.h>
 
 #include <iostream>
 #include <cmath>
@@ -27,37 +28,59 @@ CGRect from(cv::Rect rect) {
   return CGRectMake(rect.x, rect.y, rect.width, rect.height);
 }
 
+@protocol QRProcessorPrivate <NSObject>
+-(void) didProcessPrivate:(const cv::Mat&)image traces: (const cv::Mat&)traces qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
+@end
+
+
 class QRProcessor {
 public:
-  id<QRProcessor> qrProcessor;
+  id<QRProcessorPrivate> qrProcessor;
   
 public:
+  QRProcessor()
+  : DBG(true)
+  {
+  }
+  
   bool start() {
     capture.reset(new VideoCapture());
     capture->open(0);
     
-    if(!capture->isOpened()) { cerr << " ERR: Unable find input Video source." << endl;
+    if(!capture->isOpened()) {
+      cerr << " ERR: Unable find input Video source." << endl;
       return false;
     }
     
     //Step	: Capture a frame from Image Input for creating and initializing manipulation variables
     //Info	: Inbuilt functions from OpenCV
     //Note	:
-    
-    *capture >> image;
-    if(image.empty()){ cerr << "ERR: Unable to query image from capture device.\n" << endl;
-//      return false;
-    }
 
-    gray.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
-    edges.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
-    traces.reset(new Mat(image.size(), CV_8UC3));								// For Debug Visuals
-    
-    DBG=1;
     return true;
   }
   
   void process() {
+    if(!capture->isOpened()) {
+      cerr << " ERR: Video source not opened." << endl;
+      return;
+    }
+    
+    *capture >> image;						// Capture Image from Image Input
+    if(image.empty()) {
+      cerr << "ERR: Unable to query image from capture device.\n" << endl;
+      return;
+    }
+    
+    process(image);
+  }
+  
+  void process(const Mat &image) {
+    if (gray.get() == nullptr) {
+      gray.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
+      edges.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
+      traces.reset(new Mat(image.size(), CV_8UC3));								// For Debug Visuals
+    }
+    
     *traces = Scalar(0,0,0);
     qr_raw = Mat::zeros(100, 100, CV_8UC3 );
     qr = Mat::zeros(100, 100, CV_8UC3 );
@@ -65,15 +88,9 @@ public:
     qr_thres = Mat::zeros(100, 100, CV_8UC1);
     Point2f cross;
     bool iflag = false;
-
-    *capture >> image;						// Capture Image from Image Input
-    if(image.empty()){ cerr << "ERR: Unable to query image from capture device.\n" << endl;
-      return;
-    }
     
-    cvtColor(image,*gray,CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale
-    Canny(*gray, *edges, 100 , 200, 3);		// Apply Canny edge detection on the gray image
-    
+    cvtColor(image, *gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale
+    Canny(*gray, *edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
     
     findContours(*edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
     
@@ -83,9 +100,9 @@ public:
     vector<Moments> mu(contours.size());
   		vector<Point2f> mc(contours.size());
     
-    for( int i = 0; i < contours.size(); i++ )
-    {	mu[i] = moments( contours[i], false );
-      mc[i] = Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
+    for(int i = 0; i < contours.size(); ++i) {
+      mu[i] = moments(contours[i], false);
+      mc[i] = Point2f(mu[i].m10/mu[i].m00, mu[i].m01/mu[i].m00);
     }
     
     
@@ -96,21 +113,18 @@ public:
     // 2. Alternately, the Ratio of areas of the "concentric" squares can also be used for identifying base Alignment markers.
     // The below demonstrates the first method
     
-    for( int i = 0; i < contours.size(); i++ )
-    {
-      int k=i;
-      int c=0;
+    for(int i = 0; i < contours.size(); i++) {
+      int k = i;
+      int c = 0;
       
-      while(hierarchy[k][2] != -1)
-      {
+      while(hierarchy[k][2] != -1) {
         k = hierarchy[k][2] ;
-        c = c+1;
+        c = c + 1;
       }
       if(hierarchy[k][2] != -1)
         c = c+1;
       
-      if (c >= 5)
-      {
+      if (c >= 5) {
         if (mark == 0)		A = i;
         else if  (mark == 1)	B = i;		// i.e., A is already found, assign current contour to B
         else if  (mark == 2)	C = i;		// i.e., A and B are already found, assign current contour to C
@@ -123,8 +137,7 @@ public:
     CGRect bottomRect = CGRectZero;
     CGRect rightRect = CGRectZero;
     
-    if (mark >= 2)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
-    {
+    if (mark >= 2) { // Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
       // We have found the 3 markers for the QR code; Now we need to determine which of them are 'top', 'right' and 'bottom' markers
       
       // Determining the 'top' marker
@@ -134,17 +147,16 @@ public:
       BC = cv_distance(mc[B],mc[C]);
       CA = cv_distance(mc[C],mc[A]);
       
-      if ( AB > BC && AB > CA )
-      {
+      if (AB > BC && AB > CA) {
         outlier = C; median1=A; median2=B;
-      }
-      else if ( CA > AB && CA > BC )
-      {
-        outlier = B; median1=A; median2=C;
-      }
-      else if ( BC > AB && BC > CA )
-      {
-        outlier = A;  median1=B; median2=C;
+      } else if (CA > AB && CA > BC) {
+        outlier = B;
+        median1 = A;
+        median2 = C;
+      } else if (BC > AB && BC > CA) {
+        outlier = A;
+        median1 = B;
+        median2 = C;
       }
 						
       top = outlier;							// The obvious choice
@@ -155,32 +167,22 @@ public:
       // Now that we have the orientation of the line formed median1 & median2 and we also have the position of the outlier w.r.t. the line
       // Determine the 'right' and 'bottom' markers
       
-      if (align == 0)
-      {
+      if (align == 0) {
         bottom = median1;
         right = median2;
-      }
-      else if (slope < 0 && dist < 0 )		// Orientation - North
-      {
+      } else if (slope < 0 && dist < 0 ) { // Orientation - North
         bottom = median1;
         right = median2;
         orientation = CV_QR_NORTH;
-      }
-      else if (slope > 0 && dist < 0 )		// Orientation - East
-      {
+      } else if (slope > 0 && dist < 0 ) { // Orientation - East
         right = median1;
         bottom = median2;
         orientation = CV_QR_EAST;
-      }
-      else if (slope < 0 && dist > 0 )		// Orientation - South
-      {
+      } else if (slope < 0 && dist > 0 ) { // Orientation - South
         right = median1;
         bottom = median2;
         orientation = CV_QR_SOUTH;
-      }
-      
-      else if (slope > 0 && dist > 0 )		// Orientation - West
-      {
+      } else if (slope > 0 && dist > 0) { // Orientation - West
         bottom = median1;
         right = median2;
         orientation = CV_QR_WEST;
@@ -188,8 +190,7 @@ public:
       
       
       // To ensure any unintended values do not sneak up when QR code is not present
-      if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10)
-      {
+      if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10) {
         vector<Point2f> L,M,O, tempL,tempM,tempO;
         Point2f N;
         
@@ -219,41 +220,36 @@ public:
         dst.push_back(Point2f(qr.cols, qr.rows));
         dst.push_back(Point2f(0, qr.rows));
         
-        if (src.size() == 4 && dst.size() == 4 )			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
-        {
+        if (src.size() == 4 && dst.size() == 4 ) { // Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
           warp_matrix = getPerspectiveTransform(src, dst);
           warpPerspective(image, qr_raw, warp_matrix, cv::Size(qr.cols, qr.rows));
-          copyMakeBorder( qr_raw, qr, 10, 10, 10, 10,BORDER_CONSTANT, Scalar(255,255,255) );
+          copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255,255,255));
           
-          cvtColor(qr,qr_gray,CV_RGB2GRAY);
+          cvtColor(qr, qr_gray, CV_RGB2GRAY);
           threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-          
-          //threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
-          //for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
         }
         
         //Draw contours on the image
      
         // Insert Debug instructions here
-        if(DBG==1)
-        {
+        if(DBG) {
           // Debug Prints
           // Visualizations for ease of understanding
           if (slope > 5)
-            circle( *traces, cv::Point(10,20) , 5 ,  Scalar(0,0,255), -1, 8, 0 );
+            circle(*traces, cv::Point(10,20) , 5 ,  Scalar(0,0,255), -1, 8, 0 );
           else if (slope < -5)
-            circle( *traces, cv::Point(10,20) , 5 ,  Scalar(255,255,255), -1, 8, 0 );
+            circle(*traces, cv::Point(10,20) , 5 ,  Scalar(255,255,255), -1, 8, 0);
           
           // Draw contours on Trace image for analysis
-          drawContours( *traces, contours, top , Scalar(255,0,100), 1, 8, hierarchy, 0 );
-          drawContours( *traces, contours, right , Scalar(255,0,100), 1, 8, hierarchy, 0 );
-          drawContours( *traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0 );
+          drawContours(*traces, contours, top , Scalar(255,0,100), 1, 8, hierarchy, 0);
+          drawContours(*traces, contours, right , Scalar(255,0,100), 1, 8, hierarchy, 0);
+          drawContours(*traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0);
           
           // Draw points (4 corners) on Trace image for each Identification marker
-          circle( *traces, L[0], 2,  Scalar(255,255,0), -1, 8, 0 );
-          circle( *traces, L[1], 2,  Scalar(0,255,0), -1, 8, 0 );
-          circle( *traces, L[2], 2,  Scalar(0,0,255), -1, 8, 0 );
-          circle( *traces, L[3], 2,  Scalar(128,128,128), -1, 8, 0 );
+          circle(*traces, L[0], 2,  Scalar(255,255,0), -1, 8, 0);
+          circle(*traces, L[1], 2,  Scalar(0,255,0), -1, 8, 0);
+          circle(*traces, L[2], 2,  Scalar(0,0,255), -1, 8, 0);
+          circle(*traces, L[3], 2,  Scalar(128,128,128), -1, 8, 0);
           
           circle( *traces, M[0], 2,  Scalar(255,255,0), -1, 8, 0 );
           circle( *traces, M[1], 2,  Scalar(0,255,0), -1, 8, 0 );
@@ -276,20 +272,16 @@ public:
           // Show the Orientation of the QR Code wrt to 2D Image Space
           int fontFace = FONT_HERSHEY_PLAIN;
           
-          if(orientation == CV_QR_NORTH)
-          {
+          if(orientation == CV_QR_NORTH) {
             putText(*traces, "NORTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
-          else if (orientation == CV_QR_EAST)
-          {
+          else if (orientation == CV_QR_EAST) {
             putText(*traces, "EAST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
-          else if (orientation == CV_QR_SOUTH)
-          {
+          else if (orientation == CV_QR_SOUTH) {
             putText(*traces, "SOUTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
-          else if (orientation == CV_QR_WEST)
-          {
+          else if (orientation == CV_QR_WEST) {
             putText(*traces, "WEST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
           
@@ -299,15 +291,11 @@ public:
           bottomRect = from(cv::minAreaRect(contours[bottom]).boundingRect());
           rightRect = from(cv::minAreaRect(contours[right]).boundingRect());
         }
-        
       }
     }
     
-    @autoreleasepool{
-      
       CGPoint crossPoint = CGPointMake(cross.x, cross.y);
-      [qrProcessor didProcess:MatToUIImage(image) traces:MatToUIImage(*traces) qrCode:MatToUIImage(qr_thres) top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
-    }
+      [qrProcessor didProcessPrivate:image traces:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
   }
   
 private:
@@ -316,8 +304,7 @@ private:
   // Function: Routine to get Distance between two points
   // Description: Given 2 points, the function returns the distance
   
-  static float cv_distance(Point2f P, Point2f Q)
-  {
+  static float cv_distance(Point2f P, Point2f Q) {
     return sqrt(pow(abs(P.x - Q.x),2) + pow(abs(P.y - Q.y),2)) ;
   }
   
@@ -326,8 +313,7 @@ private:
   // Description: Given 3 points, the function derives the line quation of the first two points,
   //	  calculates and returns the perpendicular distance of the the 3rd point from this line.
   
-  static float cv_lineEquation(Point2f L, Point2f M, Point2f J)
-  {
+  static float cv_lineEquation(Point2f L, Point2f M, Point2f J) {
     float a,b,c,pdist;
     
     a = -((M.y - L.y) / (M.x - L.x));
@@ -344,8 +330,7 @@ private:
   // Description: Function returns the slope of the line formed by given 2 points, the alignement flag
   //	  indicates the line is vertical and the slope is infinity.
   
-  static float cv_lineSlope(Point2f L, Point2f M, int& alignement)
-  {
+  static float cv_lineSlope(Point2f L, Point2f M, int& alignement) {
     float dx,dy;
     dx = M.x - L.x;
     dy = M.y - L.y;
@@ -369,8 +354,7 @@ private:
   //	4 regions equal regions using bounding box. Distance algorithm is applied between the centre of bounding box
   //	every contour point in that region, the farthest point is deemed as the vertex of that region. Calculating
   //	for all 4 regions we obtain the 4 corners of the polygon ( - quadrilateral).
-  static void cv_getVertices(vector<vector<cv::Point> > contours, int c_id, float slope, vector<Point2f>& quad)
-  {
+  static void cv_getVertices(vector<vector<cv::Point> > contours, int c_id, float slope, vector<Point2f>& quad) {
     cv::Rect box;
     box = boundingRect( contours[c_id]);
     
@@ -406,55 +390,35 @@ private:
     float pd1 = 0.0;
     float pd2 = 0.0;
     
-    if (slope > 5 || slope < -5 )
-    {
-      
-      for( int i = 0; i < contours[c_id].size(); i++ )
-      {
+    if (slope > 5 || slope < -5) {
+      for(int i = 0; i < contours[c_id].size(); ++i) {
         pd1 = cv_lineEquation(C,A,contours[c_id][i]);	// Position of point w.r.t the diagonal AC
         pd2 = cv_lineEquation(B,D,contours[c_id][i]);	// Position of point w.r.t the diagonal BD
         
-        if((pd1 >= 0.0) && (pd2 > 0.0))
-        {
+        if((pd1 >= 0.0) && (pd2 > 0.0)) {
           cv_updateCorner(contours[c_id][i],W,dmax[1],M1);
-        }
-        else if((pd1 > 0.0) && (pd2 <= 0.0))
-        {
+        } else if((pd1 > 0.0) && (pd2 <= 0.0)) {
           cv_updateCorner(contours[c_id][i],X,dmax[2],M2);
-        }
-        else if((pd1 <= 0.0) && (pd2 < 0.0))
-        {
+        } else if((pd1 <= 0.0) && (pd2 < 0.0)) {
           cv_updateCorner(contours[c_id][i],Y,dmax[3],M3);
-        }
-        else if((pd1 < 0.0) && (pd2 >= 0.0))
-        {
+        } else if((pd1 < 0.0) && (pd2 >= 0.0)) {
           cv_updateCorner(contours[c_id][i],Z,dmax[0],M0);
         }
         else
           continue;
       }
-    }
-    else
-    {
+    } else {
       int halfx = (A.x + B.x) / 2;
       int halfy = (A.y + D.y) / 2;
       
-      for( int i = 0; i < contours[c_id].size(); i++ )
-      {
-        if((contours[c_id][i].x < halfx) && (contours[c_id][i].y <= halfy))
-        {
+      for(int i = 0; i < contours[c_id].size(); ++i) {
+        if((contours[c_id][i].x < halfx) && (contours[c_id][i].y <= halfy)) {
           cv_updateCorner(contours[c_id][i],C,dmax[2],M0);
-        }
-        else if((contours[c_id][i].x >= halfx) && (contours[c_id][i].y < halfy))
-        {
+        } else if((contours[c_id][i].x >= halfx) && (contours[c_id][i].y < halfy)) {
           cv_updateCorner(contours[c_id][i],D,dmax[3],M1);
-        }
-        else if((contours[c_id][i].x > halfx) && (contours[c_id][i].y >= halfy))
-        {
+        } else if((contours[c_id][i].x > halfx) && (contours[c_id][i].y >= halfy)) {
           cv_updateCorner(contours[c_id][i],A,dmax[0],M2);
-        }
-        else if((contours[c_id][i].x <= halfx) && (contours[c_id][i].y > halfy))
-        {
+        } else if((contours[c_id][i].x <= halfx) && (contours[c_id][i].y > halfy)) {
           cv_updateCorner(contours[c_id][i],B,dmax[1],M3);
         }
       }
@@ -464,51 +428,39 @@ private:
     quad.push_back(M1);
     quad.push_back(M2);
     quad.push_back(M3);
-    
   }
   
   // Function: Compare a point if it more far than previously recorded farthest distance
   // Description: Farthest Point detection using reference point and baseline distance
-  static void cv_updateCorner(Point2f P, Point2f ref , float& baseline,  Point2f& corner)
-  {
+  static void cv_updateCorner(Point2f P, Point2f ref , float& baseline,  Point2f& corner) {
     float temp_dist;
     temp_dist = cv_distance(P,ref);
     
-    if(temp_dist > baseline)
-    {
+    if(temp_dist > baseline) {
       baseline = temp_dist;			// The farthest distance is the new baseline
       corner = P;						// P is now the farthest point
     }
-    
   }
   
   // Function: Sequence the Corners wrt to the orientation of the QR Code
-  static void cv_updateCornerOr(int orientation, vector<Point2f> IN,vector<Point2f> &OUT)
-  {
+  static void cv_updateCornerOr(int orientation, vector<Point2f> IN,vector<Point2f> &OUT) {
     Point2f M0,M1,M2,M3;
-    if(orientation == CV_QR_NORTH)
-    {
+    if(orientation == CV_QR_NORTH) {
       M0 = IN[0];
       M1 = IN[1];
       M2 = IN[2];
       M3 = IN[3];
-    }
-    else if (orientation == CV_QR_EAST)
-    {
+    } else if (orientation == CV_QR_EAST) {
       M0 = IN[1];
       M1 = IN[2];
       M2 = IN[3];
       M3 = IN[0];
-    }
-    else if (orientation == CV_QR_SOUTH)
-    {
+    } else if (orientation == CV_QR_SOUTH) {
       M0 = IN[2];
       M1 = IN[3];
       M2 = IN[0];
       M3 = IN[1];
-    }
-    else if (orientation == CV_QR_WEST)
-    {
+    } else if (orientation == CV_QR_WEST) {
       M0 = IN[3];
       M1 = IN[0];
       M2 = IN[1];
@@ -522,14 +474,15 @@ private:
   }
   
   // Function: Get the Intersection Point of the lines formed by sets of two points
-  static bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection)
-  {
+  static bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection) {
     Point2f p = a1;
     Point2f q = b1;
     Point2f r(a2-a1);
     Point2f s(b2-b1);
     
-    if(cross(r,s) == 0) {return false;}
+    if(cross(r,s) == 0) {
+      return false;
+    }
     
     float t = cross(q-p,s)/cross(r,s);
     
@@ -537,8 +490,7 @@ private:
     return true;
   }
   
-  static float cross(Point2f v1,Point2f v2)
-  {
+  static float cross(Point2f v1, Point2f v2) {
     return v1.x*v2.y - v1.y*v2.x;
   }
   
@@ -565,8 +517,9 @@ private:
 
 // EOF
 
-@interface QRScanner () <QRProcessor>
+@interface QRScanner () <QRProcessorPrivate, CvVideoCameraDelegate>
 @property (nonatomic, assign) QRProcessor* qrProcessor;
+@property (nonatomic, strong) CvVideoCamera* videoCamera;
 @end
 
 @implementation QRScanner
@@ -578,23 +531,58 @@ private:
   return self;
 }
 
+-(instancetype) initWithParentView:(UIView *)view {
+  if (self = [super init]) {
+    _qrProcessor = new QRProcessor();
+    _qrProcessor->qrProcessor = self;
+    
+//    _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
+    _videoCamera = [[CvVideoCamera alloc] initWithParentView:nil];
+    _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
+    _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetMedium;
+    _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
+    _videoCamera.defaultFPS = 30;
+    _videoCamera.grayscaleMode = NO;
+    _videoCamera.delegate = self;
+  }
+  return self;
+}
+
 - (void) start {
-  self.qrProcessor->start();
+  if (self.videoCamera) {
+    [self.videoCamera start];
+  } else {
+    self.qrProcessor->start();
+  }
 }
 
 - (void) process {
   self.qrProcessor->process();
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
   delete _qrProcessor;
 }
 
--(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [self.delegate didProcess:image traces:traces qrCode:qrCode top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
-  });
+-(void) didProcessPrivate:(const cv::Mat&)image traces: (const cv::Mat&)traces qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
+  @autoreleasepool {
+    UIImage *i = MatToUIImage(image);
+    UIImage *t = MatToUIImage(traces);
+    UIImage *q = MatToUIImage(qrCode);
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self.delegate didProcess:i traces:t qrCode:q top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
+    });
+  }
+}
+
+//-(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
+//  dispatch_async(dispatch_get_main_queue(), ^{
+//    [self.delegate didProcess:image traces:traces qrCode:qrCode top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
+//  });
+//}
+
+- (void)processImage:(cv::Mat &)image {
+  self.qrProcessor->process(image);
 }
 
 @end

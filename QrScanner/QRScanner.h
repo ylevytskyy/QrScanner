@@ -23,6 +23,9 @@ typedef NS_ENUM(NSInteger, QRProcessorOrientation) {
 @interface QRScanner : NSObject
 @property(weak) id<QRProcessor> delegate;
 
+-(instancetype) init;
+-(instancetype) initWithParentView:(UIView *)view;
+
 - (void) start;
 - (void) process;
 @end
