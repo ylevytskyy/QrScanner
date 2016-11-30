@@ -566,9 +566,12 @@ private:
 
 -(void) didProcessPrivate:(const cv::Mat&)image traces: (const cv::Mat&)traces qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
   @autoreleasepool {
-    UIImage *i = MatToUIImage(image);
-    UIImage *t = MatToUIImage(traces);
-    UIImage *q = MatToUIImage(qrCode);
+    cv::Mat rgb;
+    cvtColor(image, rgb, CV_BGR2RGB);
+    
+    __block UIImage *i = MatToUIImage(rgb);
+    __block UIImage *t = MatToUIImage(traces);
+    __block UIImage *q = MatToUIImage(qrCode);
     dispatch_async(dispatch_get_main_queue(), ^{
       [self.delegate didProcess:i traces:t qrCode:q top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
     });
