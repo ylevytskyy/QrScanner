@@ -28,16 +28,16 @@ extension ViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    qrScanner = QRScanner()
-//    qrScanner = QRScanner(parentView: view)
+//    qrScanner = QRScanner()
+    qrScanner = QRScanner(parentView: nil)
     qrScanner?.delegate = self
     qrScanner?.start()
 
-    DispatchQueue.global().async {
-      while true {
-        self.qrScanner?.process()
-      }
-    }
+//    DispatchQueue.global().async {
+//      while true {
+//        self.qrScanner?.process()
+//      }
+//    }
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
@@ -55,11 +55,9 @@ extension ViewController {
 extension ViewController: QRProcessor {
   // MARK: - QRProcessor
 
-  public func didProcess(_ image: UIImage!, traces: UIImage!, qrCode: UIImage!, top: CGRect, bottom: CGRect, right: CGRect, cross:CGPoint, found: Bool, orientation: QRProcessorOrientation) {
+  public func didProcess(_ image: UIImage!, trace: UIImage!, qrCode: UIImage!, top: CGRect, bottom: CGRect, right: CGRect, cross:CGPoint, found: Bool, orientation: QRProcessorOrientation) {
     originalImageView.image = image
-    originalImageView.setNeedsDisplay()
-
-    tracesImageView.image = traces
+    tracesImageView.image = trace
     qrImageView.image = qrCode
     
     let ciImage = CIImage(cgImage: qrCode.cgImage!)

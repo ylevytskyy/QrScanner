@@ -29,7 +29,7 @@ CGRect from(cv::Rect rect) {
 }
 
 @protocol QRProcessorPrivate <NSObject>
--(void) didProcessPrivate:(const cv::Mat&)image traces: (const cv::Mat&)traces qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
+-(void) didProcessPrivate:(const cv::Mat&)image trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
 @end
 
 
@@ -295,7 +295,7 @@ public:
     }
     
       CGPoint crossPoint = CGPointMake(cross.x, cross.y);
-      [qrProcessor didProcessPrivate:image traces:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+      [qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
   }
   
 private:
@@ -536,8 +536,7 @@ private:
     _qrProcessor = new QRProcessor();
     _qrProcessor->qrProcessor = self;
     
-//    _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
-    _videoCamera = [[CvVideoCamera alloc] initWithParentView:nil];
+    _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
     _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
     _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetMedium;
     _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
@@ -564,25 +563,19 @@ private:
   delete _qrProcessor;
 }
 
--(void) didProcessPrivate:(const cv::Mat&)image traces: (const cv::Mat&)traces qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
+-(void) didProcessPrivate:(const cv::Mat&)original trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
   @autoreleasepool {
     cv::Mat rgb;
-    cvtColor(image, rgb, CV_BGR2RGB);
+    cvtColor(original, rgb, CV_BGR2RGB);
     
-    __block UIImage *i = MatToUIImage(rgb);
-    __block UIImage *t = MatToUIImage(traces);
-    __block UIImage *q = MatToUIImage(qrCode);
+    __block UIImage *originalImage = MatToUIImage(rgb);
+    __block UIImage *traceImage = MatToUIImage(trace);
+    __block UIImage *qrCodeImage = MatToUIImage(qrCode);
     dispatch_async(dispatch_get_main_queue(), ^{
-      [self.delegate didProcess:i traces:t qrCode:q top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
+      [self.delegate didProcess:originalImage trace:traceImage qrCode:qrCodeImage top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
     });
   }
 }
-
-//-(void) didProcess:(UIImage *)image traces: (UIImage *)traces qrCode: (UIImage *)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
-//  dispatch_async(dispatch_get_main_queue(), ^{
-//    [self.delegate didProcess:image traces:traces qrCode:qrCode top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
-//  });
-//}
 
 - (void)processImage:(cv::Mat &)image {
   self.qrProcessor->process(image);
