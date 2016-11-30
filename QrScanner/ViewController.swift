@@ -28,16 +28,9 @@ extension ViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-//    qrScanner = QRScanner()
     qrScanner = QRScanner(parentView: nil)
     qrScanner?.delegate = self
     qrScanner?.start()
-
-//    DispatchQueue.global().async {
-//      while true {
-//        self.qrScanner?.process()
-//      }
-//    }
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
