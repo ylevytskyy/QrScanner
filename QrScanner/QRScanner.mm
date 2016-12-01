@@ -540,7 +540,6 @@ private:
     _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
     _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetHigh;
     _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
-    _videoCamera.defaultFPS = 30;
     _videoCamera.grayscaleMode = NO;
     _videoCamera.delegate = self;
   }

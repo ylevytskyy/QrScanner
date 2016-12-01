@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Z22-NU-aJg">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -9,6 +9,46 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
+        <!--View Controller-->
+        <scene sceneID="ljI-uh-VHC">
+            <objects>
+                <viewController id="Z22-NU-aJg" customClass="ViewController" customModule="QrScanner" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="fbV-qD-Tpz"/>
+                        <viewControllerLayoutGuide type="bottom" id="COX-ZS-t0t"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="r9a-ni-nA1">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Zap-v8-TkS">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MMu-H0-832">
+                                <rect key="frame" x="129" y="317" width="117" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="28"/>
+                                <color key="textColor" red="1" green="0.1019607843" blue="0.4549019608" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="COX-ZS-t0t" firstAttribute="top" secondItem="Zap-v8-TkS" secondAttribute="bottom" id="8rr-eU-6nt"/>
+                            <constraint firstItem="Zap-v8-TkS" firstAttribute="leading" secondItem="r9a-ni-nA1" secondAttribute="leading" id="GrJ-an-Cld"/>
+                            <constraint firstItem="Zap-v8-TkS" firstAttribute="top" secondItem="r9a-ni-nA1" secondAttribute="top" id="R3T-Ic-Ban"/>
+                            <constraint firstAttribute="trailing" secondItem="Zap-v8-TkS" secondAttribute="trailing" id="cZz-MW-P3n"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="decodedLabel" destination="MMu-H0-832" id="98t-Hb-Q5c"/>
+                        <outlet property="originalImageView" destination="Zap-v8-TkS" id="DRA-T4-Qoi"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="QRX-Px-VBC" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-815.20000000000005" y="136.28185907046478"/>
+        </scene>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
@@ -73,6 +113,38 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="117.59999999999999" y="123.68815592203899"/>
+        </scene>
+        <!--Capture Controller-->
+        <scene sceneID="HIt-Jy-y7W">
+            <objects>
+                <viewController id="LzG-qa-Ynq" customClass="CaptureController" customModule="QrScanner" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="RwT-Cg-ONd"/>
+                        <viewControllerLayoutGuide type="bottom" id="yfS-ry-QLQ"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8NY-r3-tLz">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="aE8-Y3-G91">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="aE8-Y3-G91" secondAttribute="trailing" id="1Fe-Pi-7fl"/>
+                            <constraint firstItem="aE8-Y3-G91" firstAttribute="top" secondItem="8NY-r3-tLz" secondAttribute="top" id="83V-Yz-s7X"/>
+                            <constraint firstItem="aE8-Y3-G91" firstAttribute="leading" secondItem="8NY-r3-tLz" secondAttribute="leading" id="AHA-w1-hUN"/>
+                            <constraint firstItem="yfS-ry-QLQ" firstAttribute="top" secondItem="aE8-Y3-G91" secondAttribute="bottom" id="bH2-GS-Udu"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="originalImageView" destination="aE8-Y3-G91" id="6YR-KZ-B2e"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="XBM-O0-RC6" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="960.79999999999995" y="552.77361319340332"/>
         </scene>
     </scenes>
 </document>

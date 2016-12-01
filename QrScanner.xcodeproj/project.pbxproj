@@ -18,6 +18,7 @@
 		B49399BB1DEC800F00567617 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49399BA1DEC800F00567617 /* AssetsLibrary.framework */; };
 		B49399BD1DEC84C000567617 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49399BC1DEC84C000567617 /* AVFoundation.framework */; };
 		B49399BF1DEC84EC00567617 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49399BE1DEC84EC00567617 /* CoreMedia.framework */; };
+		B4E1C2181DF014F300522428 /* CaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E1C2171DF014F300522428 /* CaptureController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		B49399BC1DEC84C000567617 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		B49399BE1DEC84EC00567617 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		B4B51A171DECA7000044B601 /* sigslot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sigslot.h; sourceTree = "<group>"; };
+		B4E1C2171DF014F300522428 /* CaptureController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CaptureController.swift; sourceTree = "<group>"; };
 		C1D8162ED9CE576CD4C9BA3F /* Pods-QrScanner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QrScanner.release.xcconfig"; path = "Pods/Target Support Files/Pods-QrScanner/Pods-QrScanner.release.xcconfig"; sourceTree = "<group>"; };
 		DF972AC7EDF2DA730ACAFC8C /* Pods_QrScanner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QrScanner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -95,13 +97,14 @@
 				B4B51A171DECA7000044B601 /* sigslot.h */,
 				B49399931DEC7DBA00567617 /* AppDelegate.swift */,
 				B49399951DEC7DBA00567617 /* ViewController.swift */,
+				B4E1C2171DF014F300522428 /* CaptureController.swift */,
+				B49399B51DEC7F4000567617 /* QRScanner.h */,
+				B49399B61DEC7F4000567617 /* QRScanner.mm */,
+				B49399B41DEC7F3F00567617 /* QrScanner-Bridging-Header.h */,
 				B49399971DEC7DBA00567617 /* Main.storyboard */,
 				B493999A1DEC7DBA00567617 /* Assets.xcassets */,
 				B493999C1DEC7DBA00567617 /* LaunchScreen.storyboard */,
 				B493999F1DEC7DBA00567617 /* Info.plist */,
-				B49399B51DEC7F4000567617 /* QRScanner.h */,
-				B49399B61DEC7F4000567617 /* QRScanner.mm */,
-				B49399B41DEC7F3F00567617 /* QrScanner-Bridging-Header.h */,
 			);
 			path = QrScanner;
 			sourceTree = "<group>";
@@ -248,6 +251,7 @@
 			files = (
 				B49399961DEC7DBA00567617 /* ViewController.swift in Sources */,
 				B49399B71DEC7F4000567617 /* QRScanner.mm in Sources */,
+				B4E1C2181DF014F300522428 /* CaptureController.swift in Sources */,
 				B49399941DEC7DBA00567617 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
