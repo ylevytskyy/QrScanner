@@ -93,8 +93,7 @@ extension ViewController: QRProcessor {
       showLabel = true
       decodedLabel.isHidden = false
     } else if showLabel {
-//      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: bottom.origin + bottom.size))
-      decodedLabel.isHidden = !found
+      decodedLabel.isHidden = false
     }
   }
 }
