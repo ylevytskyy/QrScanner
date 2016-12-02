@@ -19,46 +19,22 @@
 using namespace cv;
 using namespace std;
 
-const int CV_QR_NORTH = 0;
-const int CV_QR_EAST = 1;
-const int CV_QR_SOUTH = 2;
-const int CV_QR_WEST = 3;
-
-CGRect from(cv::Rect rect) {
-  return CGRectMake(rect.x, rect.y, rect.width, rect.height);
-}
-
-template <class Number>
-cv::Point_<Number> max(cv::Point_<Number> *points, int count) {
-  cv::Point_<Number> m = points[0];
-  for (int i = 0; i < count; ++i) {
-    m.x = max(m.x, points[i].x);
-    m.y = max(m.y, points[i].y);
-  }
-  return m;
-}
-template <class Number>
-cv::Point_<Number> min(cv::Point_<Number> *points, int count) {
-  cv::Point_<Number> m = points[0];
-  for (int i = 0; i < count; ++i) {
-    m.x = min(m.x, points[i].x);
-    m.y = min(m.y, points[i].y);
-  }
-  return m;
-}
-
-@protocol QRProcessorPrivate <NSObject>
--(void) didProcessPrivate:(const cv::Mat&)image trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGPoint)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
-@end
-
+enum CV_QR_Orientation {
+  CV_QR_NORTH,
+  CV_QR_EAST,
+  CV_QR_SOUTH,
+  CV_QR_WEST,
+};
 
 class QRProcessor {
 public:
-  id<QRProcessorPrivate> qrProcessor;
+  typedef void (*Callback)(void *callbackData, const cv::Mat &image, const cv::Mat &trace, const cv::Mat &qrCode, const Point2f &top, const Point2f &bottom, const Point2f &right, const Point2f &cross, bool found, CV_QR_Orientation orientation);
   
 public:
-  QRProcessor()
-  : DBG(true)
+  QRProcessor(Callback theCallback, void *theCallbackData)
+  : callback(theCallback)
+  , callbackData(theCallbackData)
+  , debugEnabled(true)
   {
   }
   
@@ -151,12 +127,16 @@ public:
       }
     }
     
-    int top = -1,right = -1,bottom = -1;
-    CGRect topRect = CGRectZero;
-    CGRect bottomRect = CGRectZero;
-    CGPoint bottomPoint = CGPointZero;
-    CGRect rightRect = CGRectZero;
-    
+    int top = -1;
+    int right = -1;
+    int bottom = -1;
+//    CGPoint topPoint = CGPointZero;
+//    CGPoint bottomPoint = CGPointZero;
+//    CGPoint rightPoint = CGPointZero;
+    vector<Point2f> topPoints,rightPoints,bottomPoints;
+
+    CV_QR_Orientation orientation = CV_QR_NORTH;
+
     if (mark >= 2) { // Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
       // We have found the 3 markers for the QR code; Now we need to determine which of them are 'top', 'right' and 'bottom' markers
       
@@ -211,28 +191,28 @@ public:
       
       // To ensure any unintended values do not sneak up when QR code is not present
       if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10) {
-        vector<Point2f> L,M,O, tempL,tempM,tempO;
+        vector<Point2f> tempTopPoints,tempRightPoints,tempBottomPoints;
         
         vector<Point2f> src,dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
         // dst - Destination Points to transform overlay image
         
         Mat warp_matrix;
         
-        cv_getVertices(contours,top,slope,tempL);
-        cv_getVertices(contours,right,slope,tempM);
-        cv_getVertices(contours,bottom,slope,tempO);
+        cv_getVertices(contours,top,slope,tempTopPoints);
+        cv_getVertices(contours,right,slope,tempRightPoints);
+        cv_getVertices(contours,bottom,slope,tempBottomPoints);
         
-        cv_updateCornerOr(orientation, tempL, L); 			// Re-arrange marker corners w.r.t orientation of the QR code
-        cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
-        cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempTopPoints, topPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempRightPoints, rightPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempBottomPoints, bottomPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
         
-        iflag = getIntersectionPoint(M[1],M[2],O[3],O[2],cross);
+        iflag = getIntersectionPoint(rightPoints[1], rightPoints[2], bottomPoints[3], bottomPoints[2], cross);
         
         
-        src.push_back(L[0]);
-        src.push_back(M[1]);
+        src.push_back(topPoints[0]);
+        src.push_back(rightPoints[1]);
         src.push_back(cross);
-        src.push_back(O[3]);
+        src.push_back(bottomPoints[3]);
         
         dst.push_back(Point2f(0,0));
         dst.push_back(Point2f(qr.cols,0));
@@ -251,7 +231,7 @@ public:
         //Draw contours on the image
      
         // Insert Debug instructions here
-        if(DBG) {
+        if(debugEnabled) {
           // Debug Prints
           // Visualizations for ease of understanding
           if (slope > 5)
@@ -268,27 +248,27 @@ public:
           drawContours( image, contours, bottom , Scalar(255,0,100), 4, LINE_8, hierarchy, 0 );
           
           // Draw points (4 corners) on Trace image for each Identification marker
-          circle(*traces, L[0], 2,  Scalar(255,255,0), -1, 8, 0);
-          circle(*traces, L[1], 2,  Scalar(0,255,0), -1, 8, 0);
-          circle(*traces, L[2], 2,  Scalar(0,0,255), -1, 8, 0);
-          circle(*traces, L[3], 2,  Scalar(128,128,128), -1, 8, 0);
+          circle(*traces, topPoints[0], 2,  Scalar(255,255,0), -1, 8, 0);
+          circle(*traces, topPoints[1], 2,  Scalar(0,255,0), -1, 8, 0);
+          circle(*traces, topPoints[2], 2,  Scalar(0,0,255), -1, 8, 0);
+          circle(*traces, topPoints[3], 2,  Scalar(128,128,128), -1, 8, 0);
           
-          circle( *traces, M[0], 2,  Scalar(255,255,0), -1, 8, 0 );
-          circle( *traces, M[1], 2,  Scalar(0,255,0), -1, 8, 0 );
-          circle( *traces, M[2], 2,  Scalar(0,0,255), -1, 8, 0 );
-          circle( *traces, M[3], 2,  Scalar(128,128,128), -1, 8, 0 );
+          circle(*traces, rightPoints[0], 2,  Scalar(255,255,0), -1, 8, 0 );
+          circle(*traces, rightPoints[1], 2,  Scalar(0,255,0), -1, 8, 0 );
+          circle(*traces, rightPoints[2], 2,  Scalar(0,0,255), -1, 8, 0 );
+          circle(*traces, rightPoints[3], 2,  Scalar(128,128,128), -1, 8, 0 );
           
-          circle( *traces, O[0], 2,  Scalar(255,255,0), -1, 8, 0 );
-          circle( *traces, O[1], 2,  Scalar(0,255,0), -1, 8, 0 );
-          circle( *traces, O[2], 2,  Scalar(0,0,255), -1, 8, 0 );
-          circle( *traces, O[3], 2,  Scalar(128,128,128), -1, 8, 0 );
+          circle(*traces, bottomPoints[0], 2,  Scalar(255,255,0), -1, 8, 0 );
+          circle(*traces, bottomPoints[1], 2,  Scalar(0,255,0), -1, 8, 0 );
+          circle(*traces, bottomPoints[2], 2,  Scalar(0,0,255), -1, 8, 0 );
+          circle(*traces, bottomPoints[3], 2,  Scalar(128,128,128), -1, 8, 0 );
           
           // Draw point of the estimated 4th Corner of (entire) QR Code
-          circle( *traces, cross, 2,  Scalar(255,255,255), -1, 8, 0 );
+          circle(*traces, cross, 2,  Scalar(255,255,255), -1, 8, 0 );
           
           // Draw the lines used for estimating the 4th Corner of QR Code
-          line(*traces, M[1], cross, Scalar(255, 0, 0), 1, 8, 0);
-          line(*traces, O[3], cross, Scalar(0, 0, 255), 1, 8, 0);
+          line(*traces, rightPoints[1], cross, Scalar(255, 0, 0), 1, 8, 0);
+          line(*traces, bottomPoints[3], cross, Scalar(0, 0, 255), 1, 8, 0);
           
           
           // Show the Orientation of the QR Code wrt to 2D Image Space
@@ -296,47 +276,39 @@ public:
           
           if(orientation == CV_QR_NORTH) {
             putText(*traces, "NORTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
-          }
-          else if (orientation == CV_QR_EAST) {
+          } else if (orientation == CV_QR_EAST) {
             putText(*traces, "EAST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
-          }
-          else if (orientation == CV_QR_SOUTH) {
+          } else if (orientation == CV_QR_SOUTH) {
             putText(*traces, "SOUTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
-          }
-          else if (orientation == CV_QR_WEST) {
+          } else if (orientation == CV_QR_WEST) {
             putText(*traces, "WEST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
           
           // Debug Prints
 
-          topRect = from(cv::minAreaRect(contours[top]).boundingRect());
-          
-          cv::RotatedRect bottomMinAreaRect = cv::minAreaRect(contours[bottom]);
-          Point2f rect_points[4];
-          bottomMinAreaRect.points(rect_points);
-          
-//          double botX = min(rect_points, 4).x;
-//          double botY = max(rect_points, 4).y;
-//          auto xx = min(&contours[bottom][0], contours[bottom].size()).x;
-//          auto yy = max(&contours[bottom][0], contours[bottom].size()).y;
-//          cout << "bottomX: " << botX << " xx: " << xx << " bottomMaxY: " << botY << " yy: " << yy << endl;
-          double botX = O[3].x;
-          double botY = O[3].y;
-          bottomPoint = CGPointMake(botX, botY);
-          
-          rightRect = from(cv::minAreaRect(contours[right]).boundingRect());
+//          topPoint = CGPointMake(topPoints[0].x, topPoints[0].y);
+//          bottomPoint = CGPointMake(bottomPoints[3].x, bottomPoints[3].y);
+//          rightPoint = CGPointMake(rightPoints[1].x, rightPoints[1].y);
         }
       }
     }
     
-    CGPoint crossPoint = CGPointMake(cross.x, cross.y);
+//    CGPoint crossPoint = CGPointMake(cross.x, cross.y);
     //[qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
-    [qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomPoint right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+//    [qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+    auto topPoint = point(topPoints, 0);
+    auto bottomPoint = point(bottomPoints, 3);
+    auto rightPoint = point(rightPoints, 1);
+    callback(callbackData, image, *traces, qr_thres, topPoint, bottomPoint, rightPoint, cross, iflag, orientation);
   }
   
 private:
   // Routines
   
+  static Point2f point(vector<Point2f> points, int index) {
+    auto point = points.size() > 0 ? points[index] : Point2f();
+    return point;
+  }
   // Function: Routine to get Distance between two points
   // Description: Given 2 points, the function returns the distance
   
@@ -547,14 +519,35 @@ private:
   int mark,A,B,C,median1,median2,outlier;
   float AB,BC,CA, dist,slope, areat,arear,areab, large, padding;
 
-  int align,orientation;
+  int align;
   
-  int DBG;						// Debug Flag
+  int debugEnabled;						// Debug Flag
+
+  Callback callback;
+  void *callbackData;
 };
 
 // EOF
 
-@interface QRScanner () <QRProcessorPrivate, CvVideoCameraDelegate>
+static void callback(void *callbackData, const cv::Mat &image, const cv::Mat &trace, const cv::Mat &qrCode, const Point2f &top, const Point2f &bottom, const Point2f &right, const Point2f &cross, bool found, CV_QR_Orientation orientation) {
+  auto topPoint = CGPointMake(top.x, top.y);
+  auto bottomPoint = CGPointMake(bottom.x, bottom.y);
+  auto rightPoint = CGPointMake(right.x, right.y);
+  auto crossPoint = CGPointMake(cross.x, cross.y);
+
+  @autoreleasepool {
+    __block UIImage *originalImage = MatToUIImage(image.clone());
+    __block UIImage *traceImage = MatToUIImage(trace.clone());
+    __block UIImage *qrCodeImage = MatToUIImage(qrCode.clone());
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+      auto qrScanner = (__bridge QRScanner *)callbackData;
+      [qrScanner.delegate didProcess:originalImage trace:traceImage qrCode:qrCodeImage top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: found orientation: QRProcessorOrientation(orientation)];
+    });
+  }
+}
+
+@interface QRScanner () <CvVideoCameraDelegate>
 @property (nonatomic, assign) QRProcessor* qrProcessor;
 @property (nonatomic, strong) CvVideoCamera* videoCamera;
 @end
@@ -562,25 +555,27 @@ private:
 @implementation QRScanner
 -(instancetype) init {
   if (self = [super init]) {
-    _qrProcessor = new QRProcessor();
-    _qrProcessor->qrProcessor = self;
+    [self setup:nil];
   }
   return self;
 }
 
 -(instancetype) initWithParentView:(UIView *)view {
   if (self = [super init]) {
-    _qrProcessor = new QRProcessor();
-    _qrProcessor->qrProcessor = self;
-    
-    _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
-    _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
-    _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetHigh;
-    _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
-    _videoCamera.grayscaleMode = NO;
-    _videoCamera.delegate = self;
+    [self setup:view];
   }
   return self;
+}
+
+-(void) setup:(UIView *)view {
+  _qrProcessor = new QRProcessor(callback, (__bridge void *)self);
+  
+  _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
+  _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
+  _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetHigh;
+  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
+  _videoCamera.grayscaleMode = NO;
+  _videoCamera.delegate = self;
 }
 
 - (void) start {
@@ -597,20 +592,6 @@ private:
 
 - (void) dealloc {
   delete _qrProcessor;
-}
-
--(void) didProcessPrivate:(const cv::Mat&)original trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGPoint)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
-  cv::Mat rgb;
-  cvtColor(original, rgb, CV_BGR2RGB);
-  
-  @autoreleasepool {
-    __block UIImage *originalImage = MatToUIImage(rgb);
-    __block UIImage *traceImage = MatToUIImage(trace);
-    __block UIImage *qrCodeImage = MatToUIImage(qrCode);
-    dispatch_async(dispatch_get_main_queue(), ^{
-      [self.delegate didProcess:originalImage trace:traceImage qrCode:qrCodeImage top: top bottom: bottom right: right cross: cross found: found orientation: orientation];
-    });
-  }
 }
 
 - (void)processImage:(cv::Mat &)image {

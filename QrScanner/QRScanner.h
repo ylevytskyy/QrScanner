@@ -17,14 +17,13 @@ typedef NS_ENUM(NSInteger, QRProcessorOrientation) {
 };
 
 @protocol QRProcessor <NSObject>
--(void) didProcess:(UIImage *)image trace: (UIImage *)trace qrCode: (UIImage *)qrCode top: (CGRect)top bottom: (CGPoint)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
+-(void) didProcess:(nullable UIImage *)image trace: (nullable UIImage *)trace qrCode: (nullable UIImage *)qrCode top: (CGPoint)top bottom: (CGPoint)bottom right: (CGPoint)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
 @end
 
 @interface QRScanner : NSObject
-@property(weak) id<QRProcessor> delegate;
+@property(nullable, weak) id<QRProcessor> delegate;
 
--(instancetype) init;
--(instancetype) initWithParentView:(UIView *)view;
+-(nullable instancetype) initWithParentView:(nullable UIView *)view;
 
 - (void) start;
 - (void) process;
