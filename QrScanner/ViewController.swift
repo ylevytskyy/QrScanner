@@ -33,10 +33,10 @@ extension UIView {
 
 class ViewController: UIViewController {
   fileprivate var qrScanner: QRScanner!
-  
+
   fileprivate var timer: Timer?
   fileprivate var showLabel = false
-  
+
   fileprivate var labelView: UIView!
 //  fileprivate let label = UILabel()
 
@@ -60,13 +60,23 @@ extension ViewController {
     qrScanner = QRScanner(parentView: nil)
     qrScanner?.delegate = self
     qrScanner?.start()
+
+    let v = UIView(frame: originalImageView.bounds)
+    v.autoresizingMask = [.flexibleHeight, .flexibleWidth];
+    v.backgroundColor = UIColor.clear
+    v.layer.borderColor = UIColor.green.cgColor
+    v.layer.borderWidth = 3
+    originalImageView.addSubview(v)
     
     labelView = UIView(frame: CGRect(x: 20, y: 20, width: 200, height: 200))
     labelView.layer.borderColor = UIColor.red.cgColor
     labelView.layer.borderWidth = 3
     labelView.clipsToBounds = true
     labelView.backgroundColor = UIColor.brown
-    originalImageView.addSubview(labelView)
+    v.addSubview(labelView)
+    
+    let a = CGFloat.pi/CGFloat(4)
+    labelView.transform = CGAffineTransform.identity.rotated(by: a)
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
@@ -81,16 +91,16 @@ extension ViewController {
   }
 }
 
-extension ViewController: QRProcessor {
-  // MARK: - QRProcessor
+extension ViewController: QRScannerProtocol {
+  // MARK: - QRScannerProtocol
 
   public func didProcess(_ image: UIImage?, trace: UIImage?, qrCode: UIImage?, top: CGPoint, bottom: CGPoint, right: CGPoint, cross: CGPoint, found: Bool, orientation: QRProcessorOrientation) {
     originalImageView.image = image
     tracesImageView?.image = trace
     qrImageView?.image = qrCode
-    
+
     decodedLabel.isHidden = true
-    
+
     guard let image = image else {
       return
     }
@@ -102,21 +112,24 @@ extension ViewController: QRProcessor {
     if let decode = performQRCodeDetection(image: ciImage) {
       let bottomX = bottom.x
       let bottomY = bottom.y
-      
+
       let dx = cross.x - bottomX
       let dy = cross.y - bottomY
       let angle = atan2(dy, dx)
-      
+
       print("top: \(top) bottom: \(bottom) right: \(right) cross:\(cross) image: \(image.size) found: \(found) dx: \(dx) dy: \(dy) angle: \(angle) orientation: \(orientation)")
 
+      let origin = ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY))
+      
+      decodedLabel.setOrigin(origin: origin)
+      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
       decodedLabel.text = decode
       decodedLabel.sizeToFit()
-      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)))
-      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
-      
-      labelView.frame = CGRect(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)), size: CGSize(width: 100, height: 100))
-      labelView.transform = CGAffineTransform(rotationAngle: angle)
-      
+
+      labelView.frame = CGRect(origin: origin, size: CGSize(width: 100, height: 100))
+//      labelView.transform = CGAffineTransform(rotationAngle: angle)
+      labelView.transform = CGAffineTransform.identity.rotated(by: angle).translatedBy(x: origin.x, y: origin.y)
+
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
         self.showLabel = false
@@ -131,12 +144,12 @@ extension ViewController: QRProcessor {
 
 extension ViewController {
   fileprivate class func labelPosition(imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
-    let kx = imageView.bounds.width/image.size.width
-    let ky = imageView.bounds.height/image.size.height
-    
+    let kx = imageView.bounds.width / image.size.width
+    let ky = imageView.bounds.height / image.size.height
+
     let x = origin.x * kx
     let y = origin.y * ky
-    
+
     return CGPoint(x: x, y: y).integral
   }
 }
