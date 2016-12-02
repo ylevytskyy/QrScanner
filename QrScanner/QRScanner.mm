@@ -28,8 +28,27 @@ CGRect from(cv::Rect rect) {
   return CGRectMake(rect.x, rect.y, rect.width, rect.height);
 }
 
+template <class Number>
+cv::Point_<Number> max(cv::Point_<Number> *points, int count) {
+  cv::Point_<Number> m = points[0];
+  for (int i = 0; i < count; ++i) {
+    m.x = max(m.x, points[i].x);
+    m.y = max(m.y, points[i].y);
+  }
+  return m;
+}
+template <class Number>
+cv::Point_<Number> min(cv::Point_<Number> *points, int count) {
+  cv::Point_<Number> m = points[0];
+  for (int i = 0; i < count; ++i) {
+    m.x = min(m.x, points[i].x);
+    m.y = min(m.y, points[i].y);
+  }
+  return m;
+}
+
 @protocol QRProcessorPrivate <NSObject>
--(void) didProcessPrivate:(const cv::Mat&)image trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
+-(void) didProcessPrivate:(const cv::Mat&)image trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGPoint)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation;
 @end
 
 
@@ -135,6 +154,7 @@ public:
     int top = -1,right = -1,bottom = -1;
     CGRect topRect = CGRectZero;
     CGRect bottomRect = CGRectZero;
+    CGPoint bottomPoint = CGPointZero;
     CGRect rightRect = CGRectZero;
     
     if (mark >= 2) { // Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
@@ -244,6 +264,9 @@ public:
           drawContours(*traces, contours, right , Scalar(255,0,100), 1, 8, hierarchy, 0);
           drawContours(*traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0);
           
+          // TODO: Remove after testing!
+          drawContours( image, contours, bottom , Scalar(255,0,100), 4, LINE_8, hierarchy, 0 );
+          
           // Draw points (4 corners) on Trace image for each Identification marker
           circle(*traces, L[0], 2,  Scalar(255,255,0), -1, 8, 0);
           circle(*traces, L[1], 2,  Scalar(0,255,0), -1, 8, 0);
@@ -264,8 +287,8 @@ public:
           circle( *traces, cross, 2,  Scalar(255,255,255), -1, 8, 0 );
           
           // Draw the lines used for estimating the 4th Corner of QR Code
-          line(*traces,M[1],cross,Scalar(0,0,255),1,8,0);
-          line(*traces,O[3],cross,Scalar(0,0,255),1,8,0);
+          line(*traces, M[1], cross, Scalar(255, 0, 0), 1, 8, 0);
+          line(*traces, O[3], cross, Scalar(0, 0, 255), 1, 8, 0);
           
           
           // Show the Orientation of the QR Code wrt to 2D Image Space
@@ -287,14 +310,28 @@ public:
           // Debug Prints
 
           topRect = from(cv::minAreaRect(contours[top]).boundingRect());
-          bottomRect = from(cv::minAreaRect(contours[bottom]).boundingRect());
+          
+          cv::RotatedRect bottomMinAreaRect = cv::minAreaRect(contours[bottom]);
+          Point2f rect_points[4];
+          bottomMinAreaRect.points(rect_points);
+          
+//          double botX = min(rect_points, 4).x;
+//          double botY = max(rect_points, 4).y;
+//          auto xx = min(&contours[bottom][0], contours[bottom].size()).x;
+//          auto yy = max(&contours[bottom][0], contours[bottom].size()).y;
+//          cout << "bottomX: " << botX << " xx: " << xx << " bottomMaxY: " << botY << " yy: " << yy << endl;
+          double botX = O[3].x;
+          double botY = O[3].y;
+          bottomPoint = CGPointMake(botX, botY);
+          
           rightRect = from(cv::minAreaRect(contours[right]).boundingRect());
         }
       }
     }
     
-      CGPoint crossPoint = CGPointMake(cross.x, cross.y);
-      [qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+    CGPoint crossPoint = CGPointMake(cross.x, cross.y);
+    //[qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomRect right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
+    [qrProcessor didProcessPrivate:image trace:*traces qrCode:qr_thres top: topRect bottom: bottomPoint right: rightRect cross: crossPoint found: iflag orientation: QRProcessorOrientation(orientation)];
   }
   
 private:
@@ -304,7 +341,8 @@ private:
   // Description: Given 2 points, the function returns the distance
   
   static float cv_distance(Point2f P, Point2f Q) {
-    return sqrt(pow(abs(P.x - Q.x),2) + pow(abs(P.y - Q.y),2)) ;
+//    return sqrt(pow(abs(P.x - Q.x),2) + pow(abs(P.y - Q.y),2)) ;
+    return cv::norm(P - Q);
   }
   
   
@@ -561,7 +599,7 @@ private:
   delete _qrProcessor;
 }
 
--(void) didProcessPrivate:(const cv::Mat&)original trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGRect)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
+-(void) didProcessPrivate:(const cv::Mat&)original trace: (const cv::Mat&)trace qrCode: (const cv::Mat&)qrCode top: (CGRect)top bottom: (CGPoint)bottom right: (CGRect)right cross: (CGPoint)cross found: (BOOL) found orientation: (QRProcessorOrientation) orientation {
   cv::Mat rgb;
   cvtColor(original, rgb, CV_BGR2RGB);
   

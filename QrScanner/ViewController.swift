@@ -36,6 +36,9 @@ class ViewController: UIViewController {
   
   fileprivate var timer: Timer?
   fileprivate var showLabel = false
+  
+  fileprivate var labelView: UIView!
+//  fileprivate let label = UILabel()
 
   lazy var detector: CIDetector? = {
     let options = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
@@ -57,6 +60,13 @@ extension ViewController {
     qrScanner = QRScanner(parentView: nil)
     qrScanner?.delegate = self
     qrScanner?.start()
+    
+    labelView = UIView(frame: CGRect(x: 20, y: 20, width: 200, height: 200))
+//    labelView.layer.borderColor = UIColor.red.cgColor
+//    labelView.layer.borderWidth = 5
+//    labelView.clipsToBounds = true
+    labelView.backgroundColor = UIColor.brown
+    originalImageView.addSubview(labelView)
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
@@ -74,7 +84,7 @@ extension ViewController {
 extension ViewController: QRProcessor {
   // MARK: - QRProcessor
 
-  public func didProcess(_ image: UIImage!, trace: UIImage!, qrCode: UIImage!, top: CGRect, bottom: CGRect, right: CGRect, cross: CGPoint, found: Bool, orientation: QRProcessorOrientation) {
+  public func didProcess(_ image: UIImage!, trace: UIImage!, qrCode: UIImage!, top: CGRect, bottom: CGPoint, right: CGRect, cross: CGPoint, found: Bool, orientation: QRProcessorOrientation) {
     originalImageView.image = image
     tracesImageView?.image = trace
     qrImageView?.image = qrCode
@@ -83,15 +93,10 @@ extension ViewController: QRProcessor {
 
     let ciImage = CIImage(cgImage: qrCode.cgImage!)
     if let decode = performQRCodeDetection(image: ciImage) {
-      var bottomX = bottom.minX
-      var bottomY = bottom.maxY
-//      switch orientation {
-//      case .east, .west:
-//        bottomX = bottom.maxY
-//        bottomY = bottom.maxX
-//      default:
-//        break
-//      }
+//      let bottomX = bottom.minX
+//      let bottomY = bottom.maxY
+      let bottomX = bottom.x
+      let bottomY = bottom.y
       
       let dx = cross.x - bottomX
       let dy = cross.y - bottomY
@@ -99,10 +104,14 @@ extension ViewController: QRProcessor {
       
       print("top: \(top) bottom: \(bottom) right: \(right) cross:\(cross) image: \(image.size) found: \(found) dx: \(dx) dy: \(dy) angle: \(angle) orientation: \(orientation)")
 
+      decodedLabel.frame = CGRect.zero
+      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
+      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)))
       decodedLabel.text = decode
       decodedLabel.sizeToFit()
-      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)))
-      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
+      
+      labelView.frame = CGRect(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)), size: CGSize(width: 100, height: 100))
+      labelView.superview!.bringSubview(toFront: labelView)
       
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
