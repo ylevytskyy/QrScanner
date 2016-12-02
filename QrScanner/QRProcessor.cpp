@@ -6,7 +6,7 @@
 //  Copyright © 2016 Yuriy Levytskyy. All rights reserved.
 //
 
-#import "QRProcessor.h"
+#include "QRProcessor.h"
 
 #include <iostream>
 #include <cmath>

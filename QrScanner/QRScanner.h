@@ -26,5 +26,4 @@ typedef NS_ENUM(NSInteger, QRProcessorOrientation) {
 -(nullable instancetype) initWithParentView:(nullable UIView *)view;
 
 - (void) start;
-- (void) process;
 @end

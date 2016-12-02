@@ -26,14 +26,15 @@ public:
 public:
   QRProcessor(Callback callback, void *callbackData);
   ~QRProcessor();
-  
+
+public:
   bool start();
+  
   void process();
   void process(const cv::Mat &image);
   
 private:
   struct Implementation;
-  
   Implementation *pThis;
 };
 
