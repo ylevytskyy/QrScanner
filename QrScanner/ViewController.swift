@@ -17,8 +17,11 @@ func + (point: CGPoint, size: CGSize) -> CGPoint {
 }
 
 extension CGPoint {
-  var truncated: CGPoint {
-    return CGPoint(x: Int(x), y: Int(y))
+  /// Integral version
+  public var integral: CGPoint {
+    return CGPoint(
+      x: CoreGraphics.floor(x),
+      y: CoreGraphics.floor(y))
   }
 }
 
@@ -80,11 +83,26 @@ extension ViewController: QRProcessor {
 
     let ciImage = CIImage(cgImage: qrCode.cgImage!)
     if let decode = performQRCodeDetection(image: ciImage) {
-      print("top: \(top) bottom: \(bottom) right: \(right) image: \(image.size) found: \(found)")
+      var bottomX = bottom.minX
+      var bottomY = bottom.maxY
+//      switch orientation {
+//      case .east, .west:
+//        bottomX = bottom.maxY
+//        bottomY = bottom.maxX
+//      default:
+//        break
+//      }
+      
+      let dx = cross.x - bottomX
+      let dy = cross.y - bottomY
+      let angle = atan2(dy, dx)
+      
+      print("top: \(top) bottom: \(bottom) right: \(right) cross:\(cross) image: \(image.size) found: \(found) dx: \(dx) dy: \(dy) angle: \(angle) orientation: \(orientation)")
 
       decodedLabel.text = decode
       decodedLabel.sizeToFit()
-      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: bottom.origin + bottom.size))
+      decodedLabel.setOrigin(origin: ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY)))
+      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
       
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
@@ -106,6 +124,6 @@ extension ViewController {
     let x = origin.x * kx
     let y = origin.y * ky
     
-    return CGPoint(x: x, y: y).truncated
+    return CGPoint(x: x, y: y).integral
   }
 }

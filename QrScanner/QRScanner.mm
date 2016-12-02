@@ -192,7 +192,6 @@ public:
       // To ensure any unintended values do not sneak up when QR code is not present
       if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10) {
         vector<Point2f> L,M,O, tempL,tempM,tempO;
-        Point2f N;
         
         vector<Point2f> src,dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
         // dst - Destination Points to transform overlay image
@@ -207,12 +206,12 @@ public:
         cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
         cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
         
-        iflag = getIntersectionPoint(M[1],M[2],O[3],O[2],N);
+        iflag = getIntersectionPoint(M[1],M[2],O[3],O[2],cross);
         
         
         src.push_back(L[0]);
         src.push_back(M[1]);
-        src.push_back(N);
+        src.push_back(cross);
         src.push_back(O[3]);
         
         dst.push_back(Point2f(0,0));
@@ -262,11 +261,11 @@ public:
           circle( *traces, O[3], 2,  Scalar(128,128,128), -1, 8, 0 );
           
           // Draw point of the estimated 4th Corner of (entire) QR Code
-          circle( *traces, N, 2,  Scalar(255,255,255), -1, 8, 0 );
+          circle( *traces, cross, 2,  Scalar(255,255,255), -1, 8, 0 );
           
           // Draw the lines used for estimating the 4th Corner of QR Code
-          line(*traces,M[1],N,Scalar(0,0,255),1,8,0);
-          line(*traces,O[3],N,Scalar(0,0,255),1,8,0);
+          line(*traces,M[1],cross,Scalar(0,0,255),1,8,0);
+          line(*traces,O[3],cross,Scalar(0,0,255),1,8,0);
           
           
           // Show the Orientation of the QR Code wrt to 2D Image Space

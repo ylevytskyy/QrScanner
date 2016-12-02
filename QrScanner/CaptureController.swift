@@ -28,6 +28,10 @@ class CaptureController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
   lazy var cameraSession: AVCaptureSession = {
     let s = AVCaptureSession()
     s.sessionPreset = AVCaptureSessionPresetLow
+    
+//    let devices = AVCaptureDevice.devices()
+//    print(devices)
+    
     return s
   }()
   
@@ -36,7 +40,7 @@ class CaptureController: UIViewController, AVCaptureVideoDataOutputSampleBufferD
   //    preview?.bounds = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
   //    preview?.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
   //    preview?.videoGravity = AVLayerVideoGravityResize
-  //    return preview!
+  //    return preview
   //  }()
   
   func setupCameraSession() {
