@@ -6,6 +6,8 @@
 //  Copyright © 2016 Yuriy Levytskyy. All rights reserved.
 //
 
+#import <opencv2/opencv.hpp>
+#import <opencv2/highgui.hpp>
 #import <opencv2/imgcodecs/ios.h>
 #import <opencv2/videoio/cap_ios.h>
 
@@ -63,11 +65,7 @@ static void callback(void *callbackData, const cv::Mat &image, const cv::Mat &tr
 }
 
 - (void) start {
-  if (self.videoCamera) {
-    [self.videoCamera start];
-  } else {
-    self.qrProcessor->start();
-  }
+  [self.videoCamera start];
 }
 
 - (void) process {

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		88B71B40AA4F466B2CC4B84C /* Pods_QrScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DF972AC7EDF2DA730ACAFC8C /* Pods_QrScanner.framework */; };
+		B4361E6E1DF2C95C00BFC2D4 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */; };
+		B4361E701DF2C98B00BFC2D4 /* CGPoint+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */; };
 		B45A0F101DF21D4B0062EE6E /* QRProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B45A0F0E1DF21D4B0062EE6E /* QRProcessor.cpp */; };
 		B49399941DEC7DBA00567617 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49399931DEC7DBA00567617 /* AppDelegate.swift */; };
 		B49399961DEC7DBA00567617 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49399951DEC7DBA00567617 /* ViewController.swift */; };
@@ -24,6 +26,8 @@
 
 /* Begin PBXFileReference section */
 		1268B0BC02C830B7A6FC1369 /* Pods-QrScanner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QrScanner.debug.xcconfig"; path = "Pods/Target Support Files/Pods-QrScanner/Pods-QrScanner.debug.xcconfig"; sourceTree = "<group>"; };
+		B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
+		B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CGPoint+Extensions.swift"; sourceTree = "<group>"; };
 		B45A0F0E1DF21D4B0062EE6E /* QRProcessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = QRProcessor.cpp; sourceTree = "<group>"; };
 		B45A0F0F1DF21D4B0062EE6E /* QRProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QRProcessor.h; sourceTree = "<group>"; };
 		B49399901DEC7DBA00567617 /* QrScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QrScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -101,6 +105,8 @@
 				B49399931DEC7DBA00567617 /* AppDelegate.swift */,
 				B49399951DEC7DBA00567617 /* ViewController.swift */,
 				B4E1C2171DF014F300522428 /* CaptureController.swift */,
+				B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */,
+				B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */,
 				B49399B51DEC7F4000567617 /* QRScanner.h */,
 				B49399B61DEC7F4000567617 /* QRScanner.mm */,
 				B45A0F0E1DF21D4B0062EE6E /* QRProcessor.cpp */,
@@ -254,6 +260,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B4361E701DF2C98B00BFC2D4 /* CGPoint+Extensions.swift in Sources */,
+				B4361E6E1DF2C95C00BFC2D4 /* UIView+Extensions.swift in Sources */,
 				B49399961DEC7DBA00567617 /* ViewController.swift in Sources */,
 				B49399B71DEC7F4000567617 /* QRScanner.mm in Sources */,
 				B4E1C2181DF014F300522428 /* CaptureController.swift in Sources */,

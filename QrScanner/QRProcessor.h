@@ -9,8 +9,12 @@
 #ifndef QRProcessor_hpp
 #define QRProcessor_hpp
 
-#import <opencv2/opencv.hpp>
-#import <opencv2/highgui.hpp>
+// Forward declarations
+namespace cv {
+  template<typename _Tp> class Point_;
+  typedef Point_<float> Point2f;
+  class Mat;
+}
 
 enum CV_QR_Orientation {
   CV_QR_NORTH,
@@ -28,7 +32,7 @@ public:
   ~QRProcessor();
 
 public:
-  bool start();
+  bool startCapture();
   
   void process();
   void process(const cv::Mat &image);

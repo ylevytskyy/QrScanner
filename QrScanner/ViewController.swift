@@ -8,43 +8,21 @@
 
 import UIKit
 
-func - (point: CGPoint, size: CGSize) -> CGPoint {
-  return CGPoint(x: point.x - size.width, y: point.y - size.height)
-}
-
-func + (point: CGPoint, size: CGSize) -> CGPoint {
-  return CGPoint(x: point.x + size.width, y: point.y + size.height)
-}
-
-extension CGPoint {
-  /// Integral version
-  public var integral: CGPoint {
-    return CGPoint(
-      x: CoreGraphics.floor(x),
-      y: CoreGraphics.floor(y))
-  }
-}
-
-extension UIView {
-  func setOrigin(origin: CGPoint) {
-    frame = CGRect(origin: origin, size: frame.size)
-  }
-}
-
 class ViewController: UIViewController {
+  // MARK: - Properties
+  
   fileprivate var qrScanner: QRScanner!
 
   fileprivate var timer: Timer?
   fileprivate var showLabel = false
 
-  fileprivate var labelView: UIView!
-//  fileprivate let label = UILabel()
-
-  lazy var detector: CIDetector? = {
+  fileprivate lazy var detector: CIDetector? = {
     let options = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
     return CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: options)
   }()
 
+  // MARK: - Outlets
+  
   @IBOutlet weak var originalImageView: UIImageView!
   @IBOutlet weak var tracesImageView: UIImageView?
   @IBOutlet weak var qrImageView: UIImageView?
@@ -61,22 +39,8 @@ extension ViewController {
     qrScanner?.delegate = self
     qrScanner?.start()
 
-    let v = UIView(frame: originalImageView.bounds)
-    v.autoresizingMask = [.flexibleHeight, .flexibleWidth];
-    v.backgroundColor = UIColor.clear
-    v.layer.borderColor = UIColor.green.cgColor
-    v.layer.borderWidth = 3
-    originalImageView.addSubview(v)
-    
-    labelView = UIView(frame: CGRect(x: 20, y: 20, width: 200, height: 200))
-    labelView.layer.borderColor = UIColor.red.cgColor
-    labelView.layer.borderWidth = 3
-    labelView.clipsToBounds = true
-    labelView.backgroundColor = UIColor.brown
-    v.addSubview(labelView)
-    
-    let a = CGFloat.pi/CGFloat(4)
-    labelView.transform = CGAffineTransform.identity.rotated(by: a)
+    decodedLabel.layer.borderColor = UIColor.red.cgColor
+    decodedLabel.layer.borderWidth = 1
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
@@ -110,30 +74,29 @@ extension ViewController: QRScannerProtocol {
 
     let ciImage = CIImage(cgImage: cgImage)
     if let decode = performQRCodeDetection(image: ciImage) {
-      let bottomX = bottom.x
-      let bottomY = bottom.y
-
-      let dx = cross.x - bottomX
-      let dy = cross.y - bottomY
+      // Calculate origin
+      let origin = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: bottom.x, y: bottom.y))
+      let c = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: cross.x, y: cross.y))
+      
+      // Calculate adjusted angle
+      let dx = c.x - origin.x
+      let dy = c.y - origin.y
       let angle = atan2(dy, dx)
 
       print("top: \(top) bottom: \(bottom) right: \(right) cross:\(cross) image: \(image.size) found: \(found) dx: \(dx) dy: \(dy) angle: \(angle) orientation: \(orientation)")
 
-      let origin = ViewController.labelPosition(imageView: originalImageView, image: image, origin: CGPoint(x: bottomX, y: bottomY))
-      
-      decodedLabel.setOrigin(origin: origin)
+      // Update position, size and rotation
+      decodedLabel.origin = origin
       decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
       decodedLabel.text = decode
       decodedLabel.sizeToFit()
 
-      labelView.frame = CGRect(origin: origin, size: CGSize(width: 100, height: 100))
-//      labelView.transform = CGAffineTransform(rotationAngle: angle)
-      labelView.transform = CGAffineTransform.identity.rotated(by: angle).translatedBy(x: origin.x, y: origin.y)
-
+      // Update timer
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
         self.showLabel = false
       }
+      
       showLabel = true
       decodedLabel.isHidden = false
     } else if showLabel {
@@ -143,7 +106,9 @@ extension ViewController: QRScannerProtocol {
 }
 
 extension ViewController {
-  fileprivate class func labelPosition(imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
+  // MARK: - Implementation
+  
+  fileprivate class func position(inImageView imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
     let kx = imageView.bounds.width / image.size.width
     let ky = imageView.bounds.height / image.size.height
 

@@ -8,13 +8,16 @@
 
 #include "QRProcessor.h"
 
+#import <opencv2/opencv.hpp>
+#import <opencv2/highgui.hpp>
+
 #include <iostream>
 #include <cmath>
 
 using namespace cv;
 using namespace std;
 
-struct QRProcessor::Implementation {  
+struct QRProcessor::Implementation {
 public:
   Implementation(Callback theCallback, void *theCallbackData)
   : callback(theCallback)
@@ -23,7 +26,7 @@ public:
   {
   }
   
-  bool start() {
+  bool startCapture() {
     capture.reset(new VideoCapture());
     capture->open(0);
     
@@ -31,10 +34,6 @@ public:
       cerr << " ERR: Unable find input Video source." << endl;
       return false;
     }
-    
-    //Step	: Capture a frame from Image Input for creating and initializing manipulation variables
-    //Info	: Inbuilt functions from OpenCV
-    //Note	:
     
     return true;
   }
@@ -45,7 +44,8 @@ public:
       return;
     }
     
-    *capture >> image;						// Capture Image from Image Input
+    // Capture Image from Image Input
+    *capture >> image;
     if(image.empty()) {
       cerr << "ERR: Unable to query image from capture device.\n" << endl;
       return;
@@ -56,9 +56,12 @@ public:
   
   void process(const Mat &image) {
     if (gray.get() == nullptr) {
-      gray.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
-      edges.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));			// To hold Grayscale Image
-      traces.reset(new Mat(image.size(), CV_8UC3));								// For Debug Visuals
+      // Grayscale Image
+      gray.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));
+      // Grayscale Image
+      edges.reset(new Mat(image.size(), CV_MAKETYPE(image.depth(), 1)));
+      // Debug Visuals
+      traces.reset(new Mat(image.size(), CV_8UC3));
     }
     
     *traces = Scalar(0,0,0);
@@ -67,24 +70,27 @@ public:
     qr_gray = Mat::zeros(100, 100, CV_8UC1);
     qr_thres = Mat::zeros(100, 100, CV_8UC1);
     Point2f cross;
-    bool iflag = false;
+    bool foundCross = false;
     
-    cvtColor(image, *gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale
-    Canny(*gray, *edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
+    // Convert Image captured from Image Input to GrayScale
+    cvtColor(image, *gray, CV_RGB2GRAY);
+    // Apply Canny edge detection on the gray image
+    Canny(*gray, *edges, 100, 200, 3);
     
-    findContours(*edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
+    // Find contours with hierarchy
+    findContours(*edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
     
-    mark = 0;								// Reset all detected marker count for this frame
+    // Reset all detected marker count for this frame
+    mark = 0;
     
     // Get Moments for all Contours and the mass centers
     vector<Moments> mu(contours.size());
-  		vector<Point2f> mc(contours.size());
+    vector<Point2f> mc(contours.size());
     
-    for(int i = 0; i < contours.size(); ++i) {
+    for (int i = 0; i < contours.size(); ++i) {
       mu[i] = moments(contours[i], false);
       mc[i] = Point2f(mu[i].m10/mu[i].m00, mu[i].m01/mu[i].m00);
     }
-    
     
     // Start processing the contour data
     
@@ -93,7 +99,7 @@ public:
     // 2. Alternately, the Ratio of areas of the "concentric" squares can also be used for identifying base Alignment markers.
     // The below demonstrates the first method
     
-    for(int i = 0; i < contours.size(); i++) {
+    for (int i = 0; i < contours.size(); ++i) {
       int k = i;
       int c = 0;
       
@@ -101,13 +107,18 @@ public:
         k = hierarchy[k][2] ;
         c = c + 1;
       }
-      if(hierarchy[k][2] != -1)
-        c = c+1;
+      if(hierarchy[k][2] != -1) {
+        c = c + 1;
+      }
       
       if (c >= 5) {
-        if (mark == 0)		A = i;
-        else if  (mark == 1)	B = i;		// i.e., A is already found, assign current contour to B
-        else if  (mark == 2)	C = i;		// i.e., A and B are already found, assign current contour to C
+        if (mark == 0) {
+          A = i;
+        } else if (mark == 1)	{ // i.e., A is already found, assign current contour to B
+          B = i;
+        } else if (mark == 2) { // i.e., A and B are already found, assign current contour to C
+          C = i;
+        }
         mark = mark + 1 ;
       }
     }
@@ -128,9 +139,9 @@ public:
       // Determining the 'top' marker
       // Vertex of the triangle NOT involved in the longest side is the 'outlier'
       
-      AB = cv_distance(mc[A],mc[B]);
-      BC = cv_distance(mc[B],mc[C]);
-      CA = cv_distance(mc[C],mc[A]);
+      AB = cv_distance(mc[A], mc[B]);
+      BC = cv_distance(mc[B], mc[C]);
+      CA = cv_distance(mc[C], mc[A]);
       
       if (AB > BC && AB > CA) {
         outlier = C; median1=A; median2=B;
@@ -143,15 +154,17 @@ public:
         median1 = B;
         median2 = C;
       }
-						
-      top = outlier;							// The obvious choice
+
+      // The obvious choice
+      top = outlier;
       
-      dist = cv_lineEquation(mc[median1], mc[median2], mc[outlier]);	// Get the Perpendicular distance of the outlier from the longest side
-      slope = cv_lineSlope(mc[median1], mc[median2],align);		// Also calculate the slope of the longest side
+      // Get the Perpendicular distance of the outlier from the longest side
+      dist = cv_lineEquation(mc[median1], mc[median2], mc[outlier]);
+      // Also calculate the slope of the longest side
+      slope = cv_lineSlope(mc[median1], mc[median2],align);
       
       // Now that we have the orientation of the line formed median1 & median2 and we also have the position of the outlier w.r.t. the line
       // Determine the 'right' and 'bottom' markers
-      
       if (align == 0) {
         bottom = median1;
         right = median2;
@@ -173,26 +186,29 @@ public:
         orientation = CV_QR_WEST;
       }
       
-      
       // To ensure any unintended values do not sneak up when QR code is not present
       if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10) {
         vector<Point2f> tempTopPoints,tempRightPoints,tempBottomPoints;
         
-        vector<Point2f> src,dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
-        // dst - Destination Points to transform overlay image
+        // Source Points basically the 4 end co-ordinates of the overlay image
+        vector<Point2f> src;
+        // Destination Points to transform overlay image
+        vector<Point2f> dst;
         
         Mat warp_matrix;
         
-        cv_getVertices(contours,top,slope,tempTopPoints);
-        cv_getVertices(contours,right,slope,tempRightPoints);
-        cv_getVertices(contours,bottom,slope,tempBottomPoints);
+        cv_getVertices(contours, top, slope, tempTopPoints);
+        cv_getVertices(contours, right, slope, tempRightPoints);
+        cv_getVertices(contours, bottom, slope, tempBottomPoints);
         
-        cv_updateCornerOr(orientation, tempTopPoints, topPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
-        cv_updateCornerOr(orientation, tempRightPoints, rightPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
-        cv_updateCornerOr(orientation, tempBottomPoints, bottomPoints); 			// Re-arrange marker corners w.r.t orientation of the QR code
+        // Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempTopPoints, topPoints);
+        // Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempRightPoints, rightPoints);
+        // Re-arrange marker corners w.r.t orientation of the QR code
+        cv_updateCornerOr(orientation, tempBottomPoints, bottomPoints);
         
-        iflag = getIntersectionPoint(rightPoints[1], rightPoints[2], bottomPoints[3], bottomPoints[2], cross);
-        
+        foundCross = getIntersectionPoint(rightPoints[1], rightPoints[2], bottomPoints[3], bottomPoints[2], cross);
         
         src.push_back(topPoints[0]);
         src.push_back(rightPoints[1]);
@@ -209,64 +225,59 @@ public:
           warpPerspective(image, qr_raw, warp_matrix, cv::Size(qr.cols, qr.rows));
           copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255,255,255));
           
-          cvtColor(qr, qr_gray, CV_RGB2GRAY);
+          cvtColor(qr, qr_gray, CV_BGR2GRAY);
           threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
         }
-        
-        //Draw contours on the image
         
         // Insert Debug instructions here
         if(debugEnabled) {
           // Debug Prints
           // Visualizations for ease of understanding
-          if (slope > 5)
-            circle(*traces, cv::Point(10,20) , 5 ,  Scalar(0,0,255), -1, 8, 0 );
-          else if (slope < -5)
-            circle(*traces, cv::Point(10,20) , 5 ,  Scalar(255,255,255), -1, 8, 0);
+          if (slope > 5) {
+            circle(*traces, cv::Point(10, 20), 5, Scalar(0, 0, 255), -1, 8, 0 );
+          } else if (slope < -5) {
+            circle(*traces, cv::Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
+          }
           
           // Draw contours on Trace image for analysis
-          drawContours(*traces, contours, top , Scalar(255,0,100), 1, 8, hierarchy, 0);
-          drawContours(*traces, contours, right , Scalar(255,0,100), 1, 8, hierarchy, 0);
-          drawContours(*traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0);
-          
-          // TODO: Remove after testing!
-          drawContours( image, contours, bottom , Scalar(255,0,100), 4, LINE_8, hierarchy, 0 );
+          drawContours(*traces, contours, top , Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+          drawContours(*traces, contours, right , Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+          drawContours(*traces, contours, bottom , Scalar(255, 0, 100), 1, 8, hierarchy, 0);
           
           // Draw points (4 corners) on Trace image for each Identification marker
-          circle(*traces, topPoints[0], 2,  Scalar(255,255,0), -1, 8, 0);
-          circle(*traces, topPoints[1], 2,  Scalar(0,255,0), -1, 8, 0);
-          circle(*traces, topPoints[2], 2,  Scalar(0,0,255), -1, 8, 0);
-          circle(*traces, topPoints[3], 2,  Scalar(128,128,128), -1, 8, 0);
+          circle(*traces, topPoints[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+          circle(*traces, topPoints[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+          circle(*traces, topPoints[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+          circle(*traces, topPoints[3], 2, Scalar(128, 128, 128), -1, 8, 0);
           
-          circle(*traces, rightPoints[0], 2,  Scalar(255,255,0), -1, 8, 0 );
-          circle(*traces, rightPoints[1], 2,  Scalar(0,255,0), -1, 8, 0 );
-          circle(*traces, rightPoints[2], 2,  Scalar(0,0,255), -1, 8, 0 );
-          circle(*traces, rightPoints[3], 2,  Scalar(128,128,128), -1, 8, 0 );
+          circle(*traces, rightPoints[0], 2, Scalar(255,255, 0), -1, 8, 0 );
+          circle(*traces, rightPoints[1], 2, Scalar(0, 255, 0), -1, 8, 0 );
+          circle(*traces, rightPoints[2], 2, Scalar(0, 0, 255), -1, 8, 0 );
+          circle(*traces, rightPoints[3], 2, Scalar(128, 128, 128), -1, 8, 0 );
           
-          circle(*traces, bottomPoints[0], 2,  Scalar(255,255,0), -1, 8, 0 );
-          circle(*traces, bottomPoints[1], 2,  Scalar(0,255,0), -1, 8, 0 );
-          circle(*traces, bottomPoints[2], 2,  Scalar(0,0,255), -1, 8, 0 );
-          circle(*traces, bottomPoints[3], 2,  Scalar(128,128,128), -1, 8, 0 );
+          circle(*traces, bottomPoints[0], 2, Scalar(255, 255, 0), -1, 8, 0 );
+          circle(*traces, bottomPoints[1], 2, Scalar(0, 255, 0), -1, 8, 0 );
+          circle(*traces, bottomPoints[2], 2, Scalar(0, 0, 255), -1, 8, 0 );
+          circle(*traces, bottomPoints[3], 2, Scalar(128, 128, 128), -1, 8, 0 );
           
           // Draw point of the estimated 4th Corner of (entire) QR Code
-          circle(*traces, cross, 2,  Scalar(255,255,255), -1, 8, 0 );
+          circle(*traces, cross, 2, Scalar(255, 255, 255), -1, 8, 0 );
           
           // Draw the lines used for estimating the 4th Corner of QR Code
           line(*traces, rightPoints[1], cross, Scalar(255, 0, 0), 1, 8, 0);
           line(*traces, bottomPoints[3], cross, Scalar(0, 0, 255), 1, 8, 0);
           
-          
           // Show the Orientation of the QR Code wrt to 2D Image Space
           int fontFace = FONT_HERSHEY_PLAIN;
           
           if(orientation == CV_QR_NORTH) {
-            putText(*traces, "NORTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+            putText(*traces, "NORTH", cv::Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           } else if (orientation == CV_QR_EAST) {
-            putText(*traces, "EAST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+            putText(*traces, "EAST", cv::Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           } else if (orientation == CV_QR_SOUTH) {
-            putText(*traces, "SOUTH", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+            putText(*traces, "SOUTH", cv::Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           } else if (orientation == CV_QR_WEST) {
-            putText(*traces, "WEST", cv::Point(20,30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+            putText(*traces, "WEST", cv::Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
           }
           
           // Debug Prints
@@ -277,7 +288,11 @@ public:
     auto topPoint = point(topPoints, 0);
     auto bottomPoint = point(bottomPoints, 3);
     auto rightPoint = point(rightPoints, 1);
-    callback(callbackData, image, *traces, qr_thres, topPoint, bottomPoint, rightPoint, cross, iflag, orientation);
+    
+    Mat originalImage;
+    cvtColor(image, originalImage, CV_BGR2RGB);
+    
+    callback(callbackData, originalImage, *traces, qr_thres, topPoint, bottomPoint, rightPoint, cross, foundCross, orientation);
   }
   
 private:
@@ -476,8 +491,8 @@ private:
   
 private:
   std::auto_ptr<VideoCapture> capture;
-  Mat image;
   
+  Mat image;
   std::auto_ptr<Mat> gray;			// To hold Grayscale Image
   std::auto_ptr<Mat> edges;			// To hold Grayscale Image
   std::auto_ptr<Mat> traces;		// For Debug Visuals
@@ -498,6 +513,10 @@ private:
   void *callbackData;
 };
 
+//
+// QRProcessor
+//
+
 QRProcessor::QRProcessor(Callback callback, void *callbackData)
 : pThis(new Implementation(callback, callbackData))
 {
@@ -507,8 +526,8 @@ QRProcessor::~QRProcessor() {
   delete pThis;
 }
 
-bool QRProcessor::start() {
-  return pThis->start();
+bool QRProcessor::startCapture() {
+  return pThis->startCapture();
 }
 
 void QRProcessor::process() {
