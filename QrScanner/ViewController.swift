@@ -10,7 +10,7 @@ import UIKit
 
 class ViewController: UIViewController {
   // MARK: - Properties
-  
+
   fileprivate var qrScanner: QRScanner!
 
   fileprivate var timer: Timer?
@@ -22,7 +22,7 @@ class ViewController: UIViewController {
   }()
 
   // MARK: - Outlets
-  
+
   @IBOutlet weak var originalImageView: UIImageView!
   @IBOutlet weak var tracesImageView: UIImageView?
   @IBOutlet weak var qrImageView: UIImageView?
@@ -39,19 +39,25 @@ extension ViewController {
     qrScanner?.delegate = self
     qrScanner?.start()
 
+    decodedLabel.layer.anchorPoint = CGPoint.zero
+
     decodedLabel.layer.borderColor = UIColor.red.cgColor
     decodedLabel.layer.borderWidth = 1
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
-    var decode: String?
-    if let detector = detector {
-      let features = detector.features(in: image)
-      for feature in features as! [CIQRCodeFeature] {
-        decode = feature.messageString
+    guard let detector = detector else {
+      return nil
+    }
+
+    let features = detector.features(in: image)
+    for feature in features as! [CIQRCodeFeature] {
+      if let decoded = feature.messageString {
+        return decoded
       }
     }
-    return decode
+
+    return nil
   }
 }
 
@@ -73,30 +79,17 @@ extension ViewController: QRScannerProtocol {
     }
 
     let ciImage = CIImage(cgImage: cgImage)
-    if let decode = performQRCodeDetection(image: ciImage) {
-      // Calculate origin
-      let origin = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: bottom.x, y: bottom.y))
-      let c = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: cross.x, y: cross.y))
-      
-      // Calculate adjusted angle
-      let dx = c.x - origin.x
-      let dy = c.y - origin.y
-      let angle = atan2(dy, dx)
-
-      print("top: \(top) bottom: \(bottom) right: \(right) cross:\(cross) image: \(image.size) found: \(found) dx: \(dx) dy: \(dy) angle: \(angle) orientation: \(orientation)")
-
-      // Update position, size and rotation
-      decodedLabel.origin = origin
-      decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
-      decodedLabel.text = decode
-      decodedLabel.sizeToFit()
+    if let decoded = performQRCodeDetection(image: ciImage) {
+      // Set position
+      setPosition(leftPoint: bottom, rightPoint: cross, image: image, decoded: decoded)
 
       // Update timer
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
         self.showLabel = false
       }
-      
+
+      // Update UI state
       showLabel = true
       decodedLabel.isHidden = false
     } else if showLabel {
@@ -107,7 +100,7 @@ extension ViewController: QRScannerProtocol {
 
 extension ViewController {
   // MARK: - Implementation
-  
+
   fileprivate class func position(inImageView imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
     let kx = imageView.bounds.width / image.size.width
     let ky = imageView.bounds.height / image.size.height
@@ -116,5 +109,27 @@ extension ViewController {
     let y = origin.y * ky
 
     return CGPoint(x: x, y: y).integral
+  }
+
+  fileprivate func setPosition(leftPoint: CGPoint, rightPoint: CGPoint, image: UIImage, decoded: String?) {
+    //
+    // Calculate adjusted position
+    let l = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: leftPoint.x, y: leftPoint.y))
+    let r = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: rightPoint.x, y: rightPoint.y))
+
+    //
+    // Calculate adjusted angle
+    let dx = r.x - l.x
+    let dy = r.y - l.y
+    let angle = atan2(dy, dx)
+
+    //
+    // Update position, size and rotation
+    decodedLabel.transform = CGAffineTransform.identity
+    decodedLabel.origin = l
+    decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
+
+    decodedLabel.text = decoded
+    decodedLabel.sizeToFit()
   }
 }

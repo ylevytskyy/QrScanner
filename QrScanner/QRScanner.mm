@@ -16,21 +16,21 @@
 #import "QRProcessor.h"
 
 static void callback(void *callbackData, const cv::Mat &image, const cv::Mat &trace, const cv::Mat &qrCode, const cv::Point2f &top, const cv::Point2f &bottom, const cv::Point2f &right, const cv::Point2f &cross, bool found, CV_QR_Orientation orientation) {
-  auto topPoint = CGPointMake(top.x, top.y);
-  auto bottomPoint = CGPointMake(bottom.x, bottom.y);
-  auto rightPoint = CGPointMake(right.x, right.y);
-  auto crossPoint = CGPointMake(cross.x, cross.y);
+	auto topPoint = CGPointMake(top.x, top.y);
+	auto bottomPoint = CGPointMake(bottom.x, bottom.y);
+	auto rightPoint = CGPointMake(right.x, right.y);
+	auto crossPoint = CGPointMake(cross.x, cross.y);
 
-  @autoreleasepool {
-    __block UIImage *originalImage = MatToUIImage(image.clone());
-    __block UIImage *traceImage = MatToUIImage(trace.clone());
-    __block UIImage *qrCodeImage = MatToUIImage(qrCode.clone());
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-      auto qrScanner = (__bridge QRScanner *)callbackData;
-      [qrScanner.delegate didProcess:originalImage trace:traceImage qrCode:qrCodeImage top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: found orientation: QRProcessorOrientation(orientation)];
-    });
-  }
+	@autoreleasepool {
+		__block UIImage *originalImage = MatToUIImage(image.clone());
+		__block UIImage *traceImage = MatToUIImage(trace.clone());
+		__block UIImage *qrCodeImage = MatToUIImage(qrCode.clone());
+
+		dispatch_async(dispatch_get_main_queue(), ^{
+			auto qrScanner = (__bridge QRScanner *)callbackData;
+			[qrScanner.delegate didProcess:originalImage trace:traceImage qrCode:qrCodeImage top: topPoint bottom: bottomPoint right: rightPoint cross: crossPoint found: found orientation: QRProcessorOrientation(orientation)];
+		});
+	}
 }
 
 @interface QRScanner () <CvVideoCameraDelegate>
@@ -40,44 +40,44 @@ static void callback(void *callbackData, const cv::Mat &image, const cv::Mat &tr
 
 @implementation QRScanner
 -(instancetype) init {
-  if (self = [super init]) {
-    [self setup:nil];
-  }
-  return self;
+	if (self = [super init]) {
+		[self setup:nil];
+	}
+	return self;
 }
 
 -(instancetype) initWithParentView:(UIView *)view {
-  if (self = [super init]) {
-    [self setup:view];
-  }
-  return self;
+	if (self = [super init]) {
+		[self setup:view];
+	}
+	return self;
 }
 
 -(void) setup:(UIView *)view {
-  _qrProcessor = new QRProcessor(callback, (__bridge void *)self);
-  
-  _videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
-  _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
-  _videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetHigh;
-  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
-  _videoCamera.grayscaleMode = NO;
-  _videoCamera.delegate = self;
+	_qrProcessor = new QRProcessor(callback, (__bridge void *)self);
+
+	_videoCamera = [[CvVideoCamera alloc] initWithParentView:view];
+	_videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
+	_videoCamera.defaultAVCaptureSessionPreset = AVCaptureSessionPresetHigh;
+	_videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
+	_videoCamera.grayscaleMode = NO;
+	_videoCamera.delegate = self;
 }
 
 - (void) start {
-  [self.videoCamera start];
+	[self.videoCamera start];
 }
 
 - (void) process {
-  self.qrProcessor->process();
+	self.qrProcessor->process();
 }
 
 - (void) dealloc {
-  delete _qrProcessor;
+	delete _qrProcessor;
 }
 
 - (void)processImage:(cv::Mat &)image {
-  self.qrProcessor->process(image);
+	self.qrProcessor->process(image);
 }
 
 @end
