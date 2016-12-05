@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1108" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Z22-NU-aJg">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Z22-NU-aJg">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -24,24 +25,33 @@
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Zap-v8-TkS">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </imageView>
-                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MMu-H0-832">
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MMu-H0-832">
                                 <rect key="frame" x="129" y="317" width="117" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="28"/>
                                 <color key="textColor" red="1" green="0.1019607843" blue="0.4549019608" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LLQ-lD-o6J">
+                                <rect key="frame" x="16" y="20" width="42" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="LLQ-lD-o6J" firstAttribute="top" secondItem="fbV-qD-Tpz" secondAttribute="bottom" id="4Gz-zo-Ev8"/>
                             <constraint firstItem="COX-ZS-t0t" firstAttribute="top" secondItem="Zap-v8-TkS" secondAttribute="bottom" id="8rr-eU-6nt"/>
                             <constraint firstItem="Zap-v8-TkS" firstAttribute="leading" secondItem="r9a-ni-nA1" secondAttribute="leading" id="GrJ-an-Cld"/>
                             <constraint firstItem="Zap-v8-TkS" firstAttribute="top" secondItem="r9a-ni-nA1" secondAttribute="top" id="R3T-Ic-Ban"/>
+                            <constraint firstItem="LLQ-lD-o6J" firstAttribute="leading" secondItem="r9a-ni-nA1" secondAttribute="leadingMargin" id="Scc-Bi-kxQ"/>
                             <constraint firstAttribute="trailing" secondItem="Zap-v8-TkS" secondAttribute="trailing" id="cZz-MW-P3n"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="decodedLabel" destination="MMu-H0-832" id="98t-Hb-Q5c"/>
+                        <outlet property="orientationLabel" destination="LLQ-lD-o6J" id="LuN-fF-VaR"/>
                         <outlet property="originalImageView" destination="Zap-v8-TkS" id="DRA-T4-Qoi"/>
                     </connections>
                 </viewController>

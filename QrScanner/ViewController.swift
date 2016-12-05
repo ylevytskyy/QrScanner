@@ -27,6 +27,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var tracesImageView: UIImageView?
   @IBOutlet weak var qrImageView: UIImageView?
   @IBOutlet weak var decodedLabel: UILabel!
+  @IBOutlet weak var orientationLabel: UILabel!
 }
 
 extension ViewController {
@@ -68,8 +69,11 @@ extension ViewController: QRScannerProtocol {
     originalImageView.image = image
     tracesImageView?.image = trace
     qrImageView?.image = qrCode
+    
+    orientationLabel.text = "\(orientation) + \(orientation.rawValue)"
 
     decodedLabel.isHidden = true
+    orientationLabel.isHidden = true
 
     guard let image = image else {
       return
@@ -92,8 +96,10 @@ extension ViewController: QRScannerProtocol {
       // Update UI state
       showLabel = true
       decodedLabel.isHidden = false
+      orientationLabel.isHidden = false
     } else if showLabel {
       decodedLabel.isHidden = false
+      orientationLabel.isHidden = false
     }
   }
 }
