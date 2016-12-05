@@ -36,7 +36,7 @@ extension ViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    qrScanner = QRScanner(parentView: nil)
+    qrScanner = QRScanner()
     qrScanner?.delegate = self
     qrScanner?.start()
 
@@ -65,11 +65,11 @@ extension ViewController {
 extension ViewController: QRScannerProtocol {
   // MARK: - QRScannerProtocol
 
-  public func didProcess(_ image: UIImage?, trace: UIImage?, qrCode: UIImage?, top: CGPoint, bottom: CGPoint, right: CGPoint, cross: CGPoint, found: Bool, orientation: QRProcessorOrientation) {
+  public func didProcess(_ image: UIImage?, trace: UIImage?, qrCode: UIImage?, top: CGPoint, bottom: CGPoint, right: CGPoint, cross: CGPoint, found: Bool, orientation: QRCodeOrientation) {
     originalImageView.image = image
     tracesImageView?.image = trace
     qrImageView?.image = qrCode
-    
+
     orientationLabel.text = "\(orientation) + \(orientation.rawValue)"
 
     decodedLabel.isHidden = true
