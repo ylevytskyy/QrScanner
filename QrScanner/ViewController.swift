@@ -15,6 +15,8 @@ class ViewController: UIViewController {
 
   fileprivate var timer: Timer?
   fileprivate var showLabel = false
+  
+  fileprivate var infoView: InfoView!
 
   fileprivate lazy var detector: CIDetector? = {
     let options = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
@@ -26,7 +28,6 @@ class ViewController: UIViewController {
   @IBOutlet weak var originalImageView: UIImageView!
   @IBOutlet weak var tracesImageView: UIImageView?
   @IBOutlet weak var qrImageView: UIImageView?
-  @IBOutlet weak var decodedLabel: UILabel!
   @IBOutlet weak var orientationLabel: UILabel!
 }
 
@@ -40,10 +41,11 @@ extension ViewController {
     qrScanner?.delegate = self
     qrScanner?.start()
 
-    decodedLabel.layer.anchorPoint = CGPoint.zero
-
-    decodedLabel.layer.borderColor = UIColor.red.cgColor
-    decodedLabel.layer.borderWidth = 1
+    infoView = Bundle.main.loadNib(as: InfoView.self)
+    infoView.layer.anchorPoint = CGPoint.zero
+    infoView.layer.borderColor = UIColor.black.cgColor
+    infoView.layer.borderWidth = 1
+    view.addSubview(infoView)
   }
 
   func performQRCodeDetection(image: CIImage) -> String? {
@@ -72,7 +74,7 @@ extension ViewController: QRScannerProtocol {
 
     orientationLabel.text = "\(orientation) + \(orientation.rawValue)"
 
-    decodedLabel.isHidden = true
+    infoView.isHidden = true
     orientationLabel.isHidden = true
 
     guard let image = image else {
@@ -85,8 +87,9 @@ extension ViewController: QRScannerProtocol {
     let ciImage = CIImage(cgImage: cgImage)
     if let decoded = performQRCodeDetection(image: ciImage) {
       // Set position
-      setPosition(leftPoint: bottom, rightPoint: cross, image: image, decoded: decoded)
-
+      infoView.decodedLabel.text = decoded
+      setPosition(view: infoView, leftPoint: bottom, rightPoint: cross, image: image, decoded: decoded)
+      
       // Update timer
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
@@ -95,10 +98,11 @@ extension ViewController: QRScannerProtocol {
 
       // Update UI state
       showLabel = true
-      decodedLabel.isHidden = false
+      
+      infoView.isHidden = false
       orientationLabel.isHidden = false
     } else if showLabel {
-      decodedLabel.isHidden = false
+      infoView.isHidden = false
       orientationLabel.isHidden = false
     }
   }
@@ -107,7 +111,7 @@ extension ViewController: QRScannerProtocol {
 extension ViewController {
   // MARK: - Implementation
 
-  fileprivate class func position(inImageView imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
+  private class func position(inImageView imageView: UIImageView, image: UIImage, origin: CGPoint) -> CGPoint {
     let kx = imageView.bounds.width / image.size.width
     let ky = imageView.bounds.height / image.size.height
 
@@ -117,7 +121,7 @@ extension ViewController {
     return CGPoint(x: x, y: y).integral
   }
 
-  fileprivate func setPosition(leftPoint: CGPoint, rightPoint: CGPoint, image: UIImage, decoded: String?) {
+  fileprivate func setPosition(view: UIView, leftPoint: CGPoint, rightPoint: CGPoint, image: UIImage, decoded: String?) {
     //
     // Calculate adjusted position
     let l = ViewController.position(inImageView: originalImageView, image: image, origin: CGPoint(x: leftPoint.x, y: leftPoint.y))
@@ -131,11 +135,9 @@ extension ViewController {
 
     //
     // Update position, size and rotation
-    decodedLabel.transform = CGAffineTransform.identity
-    decodedLabel.origin = l
-    decodedLabel.transform = CGAffineTransform(rotationAngle: angle)
-
-    decodedLabel.text = decoded
-    decodedLabel.sizeToFit()
+    view.transform = CGAffineTransform.identity
+    view.origin = l
+    view.size = view.systemLayoutSizeFitting(UILayoutFittingExpandedSize)
+    view.transform = CGAffineTransform(rotationAngle: angle)
   }
 }

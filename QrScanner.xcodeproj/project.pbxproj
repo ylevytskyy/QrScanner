@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		424A6C0A1DF6DDCB00D989A0 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 424A6C091DF6DDCB00D989A0 /* Bundle+Extensions.swift */; };
+		42CE3ABB1DF6DEB400E66036 /* InfoView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 42CE3ABA1DF6DEB400E66036 /* InfoView.xib */; };
+		42CE3ABD1DF6DECE00E66036 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42CE3ABC1DF6DECE00E66036 /* InfoView.swift */; };
 		88B71B40AA4F466B2CC4B84C /* Pods_QrScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DF972AC7EDF2DA730ACAFC8C /* Pods_QrScanner.framework */; };
 		B4361E6E1DF2C95C00BFC2D4 /* UIView+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */; };
 		B4361E701DF2C98B00BFC2D4 /* CGPoint+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */; };
@@ -26,6 +29,9 @@
 
 /* Begin PBXFileReference section */
 		1268B0BC02C830B7A6FC1369 /* Pods-QrScanner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QrScanner.debug.xcconfig"; path = "Pods/Target Support Files/Pods-QrScanner/Pods-QrScanner.debug.xcconfig"; sourceTree = "<group>"; };
+		424A6C091DF6DDCB00D989A0 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
+		42CE3ABA1DF6DEB400E66036 /* InfoView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InfoView.xib; sourceTree = "<group>"; };
+		42CE3ABC1DF6DECE00E66036 /* InfoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 		B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIView+Extensions.swift"; sourceTree = "<group>"; };
 		B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CGPoint+Extensions.swift"; sourceTree = "<group>"; };
 		B49399901DEC7DBA00567617 /* QrScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QrScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -69,6 +75,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		42CE3ABE1DF6DEE900E66036 /* InfoView */ = {
+			isa = PBXGroup;
+			children = (
+				42CE3ABA1DF6DEB400E66036 /* InfoView.xib */,
+				42CE3ABC1DF6DECE00E66036 /* InfoView.swift */,
+			);
+			name = InfoView;
+			sourceTree = "<group>";
+		};
 		7797D68613E85CE1676E8A7E /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -107,6 +122,7 @@
 				B4E1C2171DF014F300522428 /* CaptureController.swift */,
 				B49399B51DEC7F4000567617 /* QRScanner.h */,
 				B49399B61DEC7F4000567617 /* QRScanner.mm */,
+				42CE3ABE1DF6DEE900E66036 /* InfoView */,
 				B4B3CDED1DF30DEC0058E23B /* Extensions */,
 				B4B3CDEC1DF30DD80058E23B /* Supporting Files */,
 			);
@@ -155,6 +171,7 @@
 			children = (
 				B4361E6D1DF2C95C00BFC2D4 /* UIView+Extensions.swift */,
 				B4361E6F1DF2C98B00BFC2D4 /* CGPoint+Extensions.swift */,
+				424A6C091DF6DDCB00D989A0 /* Bundle+Extensions.swift */,
 			);
 			name = Extensions;
 			sourceTree = "<group>";
@@ -194,7 +211,6 @@
 				TargetAttributes = {
 					B493998F1DEC7DBA00567617 = {
 						CreatedOnToolsVersion = 8.1;
-						DevelopmentTeam = GFN9SKWLAD;
 						LastSwiftMigration = 0810;
 						ProvisioningStyle = Automatic;
 					};
@@ -223,6 +239,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42CE3ABB1DF6DEB400E66036 /* InfoView.xib in Resources */,
 				B493999E1DEC7DBA00567617 /* LaunchScreen.storyboard in Resources */,
 				B493999B1DEC7DBA00567617 /* Assets.xcassets in Resources */,
 				B49399991DEC7DBA00567617 /* Main.storyboard in Resources */,
@@ -291,6 +308,8 @@
 				B49399B71DEC7F4000567617 /* QRScanner.mm in Sources */,
 				B4E1C2181DF014F300522428 /* CaptureController.swift in Sources */,
 				B49399941DEC7DBA00567617 /* AppDelegate.swift in Sources */,
+				42CE3ABD1DF6DECE00E66036 /* InfoView.swift in Sources */,
+				424A6C0A1DF6DDCB00D989A0 /* Bundle+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,7 +435,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = GFN9SKWLAD;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -424,7 +443,7 @@
 				);
 				INFOPLIST_FILE = QrScanner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.epam.Qr-Scanner";
+				PRODUCT_BUNDLE_IDENTIFIER = com.epam.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "QrScanner/QrScanner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -439,7 +458,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = GFN9SKWLAD;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -447,7 +466,7 @@
 				);
 				INFOPLIST_FILE = QrScanner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.epam.Qr-Scanner";
+				PRODUCT_BUNDLE_IDENTIFIER = com.epam.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "QrScanner/QrScanner-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
