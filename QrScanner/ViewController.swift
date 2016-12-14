@@ -136,6 +136,7 @@ extension ViewController {
     //
     // Update position, size and rotation
     view.transform = CGAffineTransform.identity
+    view.frame = self.view.bounds
     view.origin = l
     view.size = view.systemLayoutSizeFitting(UILayoutFittingExpandedSize)
     view.transform = CGAffineTransform(rotationAngle: angle)
