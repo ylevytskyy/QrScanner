@@ -71,6 +71,10 @@ static void callback(void *callbackData, const cv::Mat &image,
   return self;
 }
 
+- (void)dealloc {
+  delete _qrProcessor;
+}
+
 - (void)start {
   [self.videoCamera start];
 }
@@ -79,9 +83,7 @@ static void callback(void *callbackData, const cv::Mat &image,
   self.qrProcessor->process();
 }
 
-- (void)dealloc {
-  delete _qrProcessor;
-}
+#pragma mark - CvVideoCameraDelegate
 
 - (void)processImage:(cv::Mat &)image {
   self.qrProcessor->process(image);

@@ -15,7 +15,7 @@ class ViewController: UIViewController {
 
   fileprivate var timer: Timer?
   fileprivate var showLabel = false
-  
+
   fileprivate var infoView: InfoView!
 
   fileprivate lazy var detector: CIDetector? = {
@@ -84,24 +84,27 @@ extension ViewController: QRScannerProtocol {
       return
     }
 
-    let ciImage = CIImage(cgImage: cgImage)
-    if let decoded = performQRCodeDetection(image: ciImage) {
+    if found {
+      let ciImage = CIImage(cgImage: cgImage)
+      if let decoded = performQRCodeDetection(image: ciImage) {
+        infoView.decodedLabel.text = decoded
+      }
+
       // Set position
-      infoView.decodedLabel.text = decoded
-      setPosition(view: infoView, leftPoint: bottom, rightPoint: cross, image: image, decoded: decoded)
-      
+      setPosition(view: infoView, leftPoint: bottom, rightPoint: cross, image: image, decoded: infoView.decodedLabel.text)
+
       // Update timer
       timer?.invalidate()
       timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
         self.showLabel = false
+        self.infoView.decodedLabel.text = nil
       }
 
       // Update UI state
-      showLabel = true
-      
-      infoView.isHidden = false
-      orientationLabel.isHidden = false
-    } else if showLabel {
+      showLabel = infoView.decodedLabel.text != nil
+    }
+
+    if showLabel {
       infoView.isHidden = false
       orientationLabel.isHidden = false
     }
